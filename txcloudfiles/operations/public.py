@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for public operation requests.
+    Public requests define ways for public users to interact with a Cloud Files
+    container, such as posting data to a container from an HTML form.
+
+'''
+
+# todo
 
 '''
 

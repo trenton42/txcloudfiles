@@ -16,14 +16,23 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Authentication instances store the required connection information for
+    handshaking with the remote authentication service, including caching
+    of authentication tokens.
+
+'''
+
+class BaseAuth(object):
+    '''
+        Root authentication class with other authentication classes inherit.
+    '''
+
+class Auth(BaseAuth):
+    '''
+        Authentication, sesstion and token storage.
+    '''
 
 '''
 

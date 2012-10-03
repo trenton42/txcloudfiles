@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for account operation requests.
+    Account requests deal with global account settings, currently this is only
+    account meta data.
+
+'''
+
+# todo
 
 '''
 

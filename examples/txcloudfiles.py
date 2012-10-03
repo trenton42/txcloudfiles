@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 
     Copyright 2012 Joe Harris
@@ -16,14 +18,13 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Example non-daemonising usage of txcloudfiles using reactor.run()
+
+'''
+
+# todo
 
 '''
 

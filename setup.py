@@ -17,10 +17,11 @@
 '''
 
 from setuptools import setup, find_packages
+from txcloudfiles import __version__
 
 setup(
     name='txcloudfiles',
-    version='0.1',
+    version=__version__,
     url='https://github.com/meeb/txcloudfiles',
     license='Apache 2.0',
     description='twisted interface to rackspace cloud files',
@@ -29,13 +30,17 @@ setup(
     packages=find_packages(),
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
+        'License :: OSI Approved :: Apache Software License',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
-        'Environment :: MacOS X',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: Communications',
+        'Environment :: Console',
+        'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: System :: Archiving',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: Utilities',
     ],
 )
+
+

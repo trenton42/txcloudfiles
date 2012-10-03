@@ -16,14 +16,17 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Object objects represent a Cloud Files storage object. They can be created
+    locally prior to uploading. They must be placed inside a Container object.
+
+'''
+
+class Object(object):
+    '''
+        A representation of a Cloud Files storage object.
+    '''
 
 '''
 

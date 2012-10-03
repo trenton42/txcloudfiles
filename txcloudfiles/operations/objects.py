@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for object operation requests.
+    Object requests deal with creating, listing, deleting and updating Cloud
+    Files storage objects.
+
+'''
+
+# todo
 
 '''
 

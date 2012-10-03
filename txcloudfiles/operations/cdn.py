@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for CDN operation requests. CDN
+    requests deal with publishing Cloud Files containers to the public CDN
+    and control streaming settings.
+
+'''
+
+# todo
 
 '''
 

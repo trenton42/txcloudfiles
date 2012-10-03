@@ -16,14 +16,17 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Container objects represent a Cloud Files container. They can be created
+    locally prior to uploading.
+
+'''
+
+class Container(object):
+    '''
+        A representation of a Cloud Files container.
+    '''
 
 '''
 

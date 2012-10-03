@@ -16,14 +16,14 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Transport provides the generic wrapper interface to the Cloud Files API
+    endpoint allowing the commands to ignore the authentication details.
+
+'''
+
+# todo
 
 '''
 

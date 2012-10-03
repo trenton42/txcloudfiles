@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for authentication operation
+    requests. Authentication requests deal with verification of account details
+    and authentication token retrieval.
+
+'''
+
+# todo
 
 '''
 

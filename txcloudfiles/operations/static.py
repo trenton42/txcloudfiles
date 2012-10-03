@@ -16,14 +16,15 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Provides response validators and parsers for static website operation
+    requests. Static requests handle defining a publicly accessible website
+    from a Cloud Files container.
+
+'''
+
+# todo
 
 '''
 

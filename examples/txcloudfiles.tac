@@ -16,14 +16,13 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ [
-    'auth',
-    'transport',
-    'cfobject',
-    'cfcontainer',
-]
+    Example daemonising usage of txcloudfiles using twisted services
+
+'''
+
+# todo
 
 '''
 
