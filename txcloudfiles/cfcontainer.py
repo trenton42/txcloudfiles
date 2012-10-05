@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 
     Copyright 2012 Joe Harris
@@ -18,8 +20,8 @@
 
 '''
 
-    Container objects represent a Cloud Files container. They can be created
-    locally prior to uploading.
+    Container objects represent a Cloud Files container. They contain objects.
+    Containers must be placed inside an account.
 
 '''
 

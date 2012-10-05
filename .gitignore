@@ -5,3 +5,4 @@
 pip-log.txt
 .coverage
 .tox
+tests/_trial_*

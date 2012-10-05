@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 
     Copyright 2012 Joe Harris
@@ -18,8 +20,8 @@
 
 '''
 
-    Object objects represent a Cloud Files storage object. They can be created
-    locally prior to uploading. They must be placed inside a Container object.
+    Object objects represent a Cloud Files storage object. They must be placed
+    inside a Container object.
 
 '''
 

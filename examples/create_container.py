@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 '''
 
@@ -20,7 +21,7 @@
 
 '''
 
-    Example non-daemonising usage of txcloudfiles using reactor.run()
+    Example of non-daemonising usage of txcloudfiles using reactor.run()
 
 '''
 

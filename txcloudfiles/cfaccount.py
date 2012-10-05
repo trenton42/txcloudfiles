@@ -18,15 +18,16 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ = [
-    'auth',
-    'transport',
-    'cfaccount',
-    'cfobject',
-    'cfcontainer',
-]
+    Account objects represent a Cloud Files account. They contain containers.
+
+'''
+
+class Container(object):
+    '''
+        A representation of a Cloud Files container.
+    '''
 
 '''
 

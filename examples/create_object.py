@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 '''
 
     Copyright 2012 Joe Harris
@@ -18,7 +21,7 @@
 
 '''
 
-    Example daemonising usage of txcloudfiles using twisted services
+    Example of non-daemonising usage of txcloudfiles using reactor.run()
 
 '''
 

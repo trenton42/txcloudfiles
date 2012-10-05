@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 '''
@@ -18,15 +19,13 @@
 
 '''
 
-__version__ = '0.1'
+'''
 
-__all__ = [
-    'auth',
-    'transport',
-    'cfaccount',
-    'cfobject',
-    'cfcontainer',
-]
+    Example of non-daemonising usage of txcloudfiles using reactor.run()
+
+'''
+
+# todo
 
 '''
 

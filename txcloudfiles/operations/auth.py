@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 
     Copyright 2012 Joe Harris
@@ -24,7 +26,28 @@
 
 '''
 
-# todo
+from txcloudfiles.transport import Request, Response
+
+class AuthRequest(Request):
+    '''
+        Attempts to get an authentication token from the auth service.
+    '''
+    
+    URI = '/'
+    METHOD = Request.GET
+    AUTH_REQUEST = True
+    REQUIRED_HEADERS = (
+        'X-Auth-User',
+        'X-Auth-Key',
+    )
+    REQUIRED_BODY = False
+    EXPECTED_HEADERS = (
+        'X-Storage-Url',
+        'X-Cdn-Management-Url',
+        'X-Auth-Token',
+    )
+    EXPECTED_BODY = False
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 '''
 
