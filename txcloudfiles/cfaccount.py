@@ -33,9 +33,13 @@ class Account(object):
         A representation of a Cloud Files account.
     '''
     
-    def __init__(self):
+    def __init__(self, username=''):
+        self._username = username
         self._container_count = 0
         self._data_used = None
+    
+    def __repr__(self):
+        return '<CloudFiles %s object (%s) at %s>' % (self.__class__.__name__, self._username, hex(id(self)))
     
     def set_container_count(self, x):
         self._container_count = parse_int(x)

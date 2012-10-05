@@ -32,6 +32,12 @@ def parse_int(x):
     except ValueError:
         return 0
 
+def parse_str(x):
+    try:
+        return str(x)
+    except ValueError:
+        return ''
+
 class DataUsage(object):
     
     BANDWIDTH_B = 1

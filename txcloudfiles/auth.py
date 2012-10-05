@@ -28,7 +28,7 @@
 
 from twisted.internet import task
 from twisted.internet.defer import Deferred
-from operations.auth import AuthRequest
+from requests.auth import AuthRequest
 from session import Session
 from errors import InvalidEndpointException, CannotCreateSessionException
 

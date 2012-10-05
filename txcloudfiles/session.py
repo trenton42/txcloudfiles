@@ -29,9 +29,12 @@
 from time import time
 from urlparse import urlsplit
 from twisted.internet.defer import Deferred
+from helpers import parse_int, parse_str
 from errors import NotAuthenticatedException, RequestException
-from operations.account import AccountRequest
+from requests.account import AccountRequest, AccountSetTempURLKeyRequest
+from requests.containers import ListContainersRequest
 from cfaccount import Account
+from cfcontainer import ContainerSet, Container
 
 class Session(object):
     '''
@@ -79,14 +82,16 @@ class Session(object):
     def get_management_url_parts(self):
         return self._management_url_parts
     
-    ''' account wrappers '''
+    ''' account request wrappers '''
     
     def get_account(self):
+        '''
+            Returns an Account object on success.
+        '''
         d = Deferred()
-        
         def _parse(r):
             if r.OK:
-                a = Account()
+                a = Account(self._username)
                 a.set_container_count(r.headers.get('X-Account-Container-Count', ''))
                 a.set_bytes_used(r.headers.get('X-Account-Bytes-Used', ''))
                 d.callback(a)
@@ -94,8 +99,45 @@ class Session(object):
                 d.errback(NotAuthenticatedException('failed to get account information, not authorised'))
             else:
                 d.errback(RequestException('failed to get account information'))
-        
         request = AccountRequest(self)
+        request.set_parser(_parse)
+        request.run()
+        return d
+    
+    def set_temp_url_key(self, key):
+        '''
+            Returns boolean True on success.
+        '''
+        key = parse_str(key)
+        d = Deferred()
+        def _parse(r):
+            if r.OK:
+                d.callback(True)
+            elif r.status_code == 401:
+                d.errback(NotAuthenticatedException('failed to set temp url key, not authorised'))
+            else:
+                d.errback(RequestException('failed to set the account key'))
+        request = AccountSetTempURLKeyRequest(self)
+        request.set_header(('X-Account-Meta-Temp-Url-Key', key))
+        request.set_parser(_parse)
+        request.run()
+        return d
+    
+    ''' container request wrappers '''
+    
+    def list_containers(self):
+        '''
+            Returns a ContainerSet() object on success
+        '''
+        d = Deferred()
+        def _parse(r):
+            if r.OK:
+                d.callback(ContainerSet(r.body))
+            elif r.status_code == 401:
+                d.errback(NotAuthenticatedException('failed to set temp url key, not authorised'))
+            else:
+                d.errback(RequestException('failed to set the account key'))
+        request = ListContainersRequest(self)
         request.set_parser(_parse)
         request.run()
         return d

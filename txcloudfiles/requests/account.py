@@ -20,9 +20,7 @@
 
 '''
 
-    Provides response validators and parsers for account operation requests.
-    Account requests deal with global account settings, currently this is only
-    account meta data.
+    Provides request structure for account-wide operations.
 
 '''
 
@@ -32,7 +30,6 @@ class AccountRequest(Request):
     '''
         Get account information request.
     '''
-    
     URI = '/'
     METHOD = Request.HEAD
     REQUIRED_HEADERS = ()
@@ -42,7 +39,21 @@ class AccountRequest(Request):
         'X-Account-Bytes-Used',
     )
     EXPECTED_BODY = False
-    EXPECTED_RESPONSE_CODE = Response.HTTP_NO_CONTENT
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class AccountSetTempURLKeyRequest(Request):
+    '''
+        Set a temporary URL key for an account.
+    '''
+    URI = '/'
+    METHOD = Request.POST
+    REQUIRED_HEADERS = (
+        'X-Account-Meta-Temp-Url-Key',
+    )
+    REQUIRED_BODY = False
+    EXPECTED_HEADERS = ()
+    EXPECTED_BODY = False
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 '''
 

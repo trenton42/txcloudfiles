@@ -246,9 +246,9 @@ class Request(object):
         for header in self._get_expected_headers():
             if header not in headers:
                 return status_code, 0
-        if self._get_expected_body() == self.FORMAT_BINARY and not binary_data:
+        if self._get_expected_body() == self.FORMAT_BINARY and not binary_data and status_code != 204:
             return status_code, 0
-        if self._get_expected_body() == self.FORMAT_JSON and not json_data:
+        if self._get_expected_body() == self.FORMAT_JSON and not json_data and status_code != 204:
             return status_code, 0
         return status_code, status_code
     
@@ -440,7 +440,7 @@ class Response(object):
             self.status_code = 0
         self.headers = headers
         self.body = binary_body
-        self.body_json = json_body
+        self.json = json_body
         self.body_type = body_type
 
 class ResponseError(Response):

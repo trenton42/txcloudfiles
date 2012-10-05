@@ -20,34 +20,24 @@
 
 '''
 
-    Provides response validators and parsers for authentication operation
-    requests. Authentication requests deal with verification of account details
-    and authentication token retrieval.
+    Provides response validators and parsers for container operation requests.
+    Container requests deal with deal with creating, listing, deleting and
+    updating Cloud Files containers.
 
 '''
 
 from txcloudfiles.transport import Request, Response
 
-class AuthRequest(Request):
+class ListContainersRequest(Request):
     '''
-        Get an authentication token.
+        Set a temporary URL key for an account.
     '''
-    
     URI = '/'
     METHOD = Request.GET
-    AUTH_REQUEST = True
-    MANAGEMENT_REQUEST = False
-    REQUIRED_HEADERS = (
-        'X-Auth-User',
-        'X-Auth-Key',
-    )
+    REQUIRED_HEADERS = ()
     REQUIRED_BODY = False
-    EXPECTED_HEADERS = (
-        'X-Storage-Url',
-        'X-Cdn-Management-Url',
-        'X-Auth-Token',
-    )
-    EXPECTED_BODY = False
+    EXPECTED_HEADERS = ()
+    EXPECTED_BODY = Response.FORMAT_BINARY
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 '''

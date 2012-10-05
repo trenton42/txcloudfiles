@@ -42,13 +42,13 @@ from twisted.internet import reactor, defer
 from txcloudfiles import Endpoint, Auth, DataUsage
 
 def _got_session(session):
-    print '> got session: %s' % session
-    def _ok(account):
-        print '> got account: %s' % account
-        print 'number of containers:', account.get_container_count()
-        print 'megabytes used:', account.get_data_used(DataUsage.BANDWIDTH_MB)
+    print '> got session'
+    def _ok(containerset):
+        print '> got container list'
+        for container in containerset:
+            print container, '-', repr(container)
         reactor.stop()
-    session.get_account().addCallback(_ok).addErrback(_error)
+    session.list_containers().addCallback(_ok).addErrback(_error)
 
 def _error(e):
     print 'error'
