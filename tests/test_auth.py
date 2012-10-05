@@ -30,6 +30,7 @@ except ImportError:
     if txcfpath not in sys.path:
         sys.path.insert(0, txcfpath)
 
+from twisted.internet.defer import DeferredList
 from txcloudfiles.auth import Endpoint, Auth
 
 class AuthTest(unittest.TestCase):
@@ -64,11 +65,13 @@ class AuthTest(unittest.TestCase):
         '''
             Verify a Auth().get_session() returns a valid Session.
         '''
+        
         def _got_data(s):
             self.assert_(s.is_valid(), 'unable to request remote auth token')
+        
         def _got_error(e):
-            print e
             self.fail(e)
+        
         e = Endpoint(Endpoint.UK)
         a = Auth(e, self.usr, self.key)
         d = a.get_session()
@@ -76,6 +79,33 @@ class AuthTest(unittest.TestCase):
         d.addErrback(_got_error)
         a.stop_queue()
         return d
+    
+    def test_session_queue(self):
+        '''
+            Queue a large batch of session requests and verify that we only
+            query upstream once then do a mass callback.
+        '''
+        
+        def _cleanup(results):
+            first_session = None
+            for (ok,session) in results:
+                if not first_session:
+                    first_session = session
+                if ok:
+                    self.assert_(session == first_session, 'different sessions returned for queue')
+                else:
+                    self.fail('error requesting session in queue')
+            a.stop_queue()
+        
+        e = Endpoint(Endpoint.UK)
+        a = Auth(e, self.usr, self.key)
+        l = []
+        for i in xrange(100):
+            d = a.get_session()
+            l.append(d)
+        dl = DeferredList(l)
+        dl.addCallback(_cleanup)
+        return dl
     
     def setUp(self):
         self.usr = os.environ.get('TXCFUSR', '')

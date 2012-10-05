@@ -32,9 +32,15 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
-from txverifyssl.context import VerifyingSSLContext
 from txcloudfiles import __version__
+from txcloudfiles.helpers import parse_int
 from txcloudfiles.errors import OperationConfigException, CreateRequestException
+
+# try and import the verifying SSL context from txverifyssl
+try:
+    from txverifyssl.context import VerifyingSSLContext as SSLContextFactory
+except ImportError:
+    from twisted.internet.ssl import ClientContextFactory as SSLContextFactory
 
 USER_AGENT = 'txcloudfiles v%s' % __version__
 
@@ -43,8 +49,6 @@ class Request(object):
         Transport layer which operations can use to make requests to the Cloud
         Files API. Translates responses into dictionaries.
     '''
-    
-    CONTEXT = VerifyingSSLContext
     
     METHOD_GET = 'GET'
     METHOD_PUT = 'PUT'
@@ -71,6 +75,7 @@ class Request(object):
     PUT = METHOD_PUT
     POST = METHOD_POST
     DELETE = METHOD_DELETE
+    HEAD = METHOD_HEAD
     BINARY = FORMAT_BINARY
     JSON = FORMAT_JSON
     
@@ -78,6 +83,7 @@ class Request(object):
     URI = False
     METHOD = False
     AUTH_REQUEST = False
+    MANAGEMENT_REQUEST = False
     REQUIRED_HEADERS = ()
     REQUIRED_POST = False
     EXPECTED_HEADERS = ()
@@ -96,13 +102,15 @@ class Request(object):
         self._waiting = False
     
     def _get_request_uri(self):
-        uri = getattr(self, URI, '')
+        uri = getattr(self, 'URI', '')
         try:
             uri = str(uri)
         except ValueError:
             raise OperationConfigException('operation constant URI must be a str')
         if not uri:
             raise OperationConfigException('operation constant URI must contain a URI')
+        if uri == '/':
+            return ''
         return uri
     
     def _get_request_method(self):
@@ -112,7 +120,10 @@ class Request(object):
         return method
     
     def _get_request_auth(self):
-        return True if getattr(self, 'AUTH_REQUEST', '') else False
+        return True if getattr(self, 'AUTH_REQUEST', False) else False
+    
+    def _get_request_management(self):
+        return True if getattr(self, 'MANAGEMENT_REQUEST', False) else False
     
     def _get_required_headers(self):
         required_headers = getattr(self, 'REQUIRED_HEADERS', '')
@@ -154,9 +165,12 @@ class Request(object):
         if self._get_request_auth():
             endpoint = self._session.get_endpoint()
             return endpoint.get_auth_url()
-        return urlunsplit((
-            'scheme','netloc','path','query','fragment'
-        ))
+        if self._get_request_management():
+            parts = self._session.get_storage_url_parts()
+        else:
+            parts = self._session.get_storage_url_parts()
+        path = parts.path + self._get_request_uri()
+        return urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
     
     def _get_request_headers(self):
         return self._request_headers
@@ -164,10 +178,12 @@ class Request(object):
     def _get_request_post(self):
         return self._request_post
     
-    def set_headers(self, headers={}):
-        if type(headers) != dict:
-            raise OperationConfigException('set_headers() must be called with a dictionary as the only argument')
-        self._request_headers = headers
+    def set_header(self, header=()):
+        if type(header) != tuple:
+            raise OperationConfigException('set_header() must be called with a tuple as the only argument')
+        if len(header) != 2:
+            raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
+        self._request_headers[header[0]] = header[1]
     
     def set_post(self, post={}):
         if type(post) != dict:
@@ -221,20 +237,20 @@ class Request(object):
         return headers
     
     def _verify_response(self, status_code, headers, binary_data, json_data):
-        try:
-            status_code = int(status_code)
-        except ValueError:
-            status_code = 0
-        if status_code not in self._get_expected_response_code():
-            return 0
+        status_code = parse_int(status_code)
+        expected_status_code = self._get_expected_response_code()
+        if type(expected_status_code) == int and status_code != expected_status_code:
+            return status_code, 0
+        elif type(expected_status_code) == tuple and status_code not in expected_status_code:
+            return status_code, 0
         for header in self._get_expected_headers():
             if header not in headers:
-                return 0
+                return status_code, 0
         if self._get_expected_body() == self.FORMAT_BINARY and not binary_data:
-            return 0
+            return status_code, 0
         if self._get_expected_body() == self.FORMAT_JSON and not json_data:
-            return 0
-        return status_code
+            return status_code, 0
+        return status_code, status_code
     
     def _do_request(self):
         '''
@@ -250,17 +266,19 @@ class Request(object):
             '''
             binary_data, json_data = self._parse_response_data(data)
             headers = self._parse_headers(factory.response_headers)
-            status_code = self._verify_response(factory.status, headers, binary_data, json_data)
+            actual_code, status_code = self._verify_response(factory.status, headers, binary_data, json_data)
             response_class = Response if status_code > 0 else ResponseError
             self._request_parser(response_class(
                 request=self,
-                status_code=factory.status,
+                status_code=actual_code,
                 headers=factory.response_headers,
                 binary_body=binary_data,
                 json_body=json_data,
                 body_type=self._get_expected_body()
             ))
         
+        if not self._get_request_auth():
+            self.set_header(('X-Auth-Token', self._session.get_key()))
         url = self._get_request_url()
         factory = HTTPClientFactory(
             url,
@@ -278,14 +296,11 @@ class Request(object):
         port = 0
         if custom_port > 0:
             port = parts.netloc[custom_port+1:]
-            try:
-                port = int(port)
-            except ValueError:
-                port = 0
+            port = parse_int(port)
         if port == 0:
             port = 443 if parts.scheme == 'https' else 80
         if parts.scheme == 'https':
-            reactor.connectSSL(parts.netloc, port, factory, self.CONTEXT(url))
+            reactor.connectSSL(parts.netloc, port, factory, SSLContextFactory(url))
         else:
             reactor.connectTCP(parts.netloc, port, factory)
         factory.deferred.addCallback(_got_data, factory)
@@ -410,12 +425,15 @@ class Response(object):
         HTTP_SERVER_ERROR,
     )
     
+    FORMAT_BINARY = 'binary'
+    FORMAT_JSON = 'json'
+    FORMATS = (
+        FORMAT_BINARY,
+        FORMAT_JSON
+    )
+    
     def __init__(self, request=None, status_code=0, headers={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
         self.request = request
-        try:
-            status_code = int(status_code)
-        except ValueError:
-            status_code = 0
         if status_code in self.HTTP_RESPONSE_CODES:
             self.status_code = status_code
         else:

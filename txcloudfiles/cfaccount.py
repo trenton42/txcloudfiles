@@ -20,14 +20,34 @@
 
 '''
 
-    Account objects represent a Cloud Files account. They contain containers.
+    Account objects represent a Cloud Files account. Stores meta-data relating
+    to account operations.
 
 '''
 
-class Container(object):
+from helpers import parse_int, DataUsage
+from errors import RequestException
+
+class Account(object):
     '''
-        A representation of a Cloud Files container.
+        A representation of a Cloud Files account.
     '''
+    
+    def __init__(self):
+        self._container_count = 0
+        self._data_used = None
+    
+    def set_container_count(self, x):
+        self._container_count = parse_int(x)
+    
+    def set_bytes_used(self, x):
+        self._data_used = DataUsage(x)
+    
+    def get_container_count(self):
+        return self._container_count
+    
+    def get_data_used(self, bandwidth=DataUsage.BANDWIDTH_B):
+        return self._data_used.get_in(bandwidth)
 
 '''
 

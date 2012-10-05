@@ -164,15 +164,17 @@ class Auth(BaseAuth):
             self._waiting = False
             if r.OK:
                 self._set_session(Session(
+                    username=self.get_username(),
                     key=r.headers.get('X-Auth-Token', ''),
                     storage_url=r.headers.get('X-Storage-Url', ''),
                     management_url=r.headers.get('X-Cdn-Management-Url', ''),
-                    servicenet=self.use_servicenet()
+                    servicenet=Endpoint.SNET_PREFIX if self.use_servicenet() else ''
                 ))
                 # send the session off to the callback
                 d.callback(self._get_session())
             else:
-                d.callback(CannotCreateSessionException('error creating session'))
+                e = 'authorisation error' if r.status_code == 401 else 'transport error'
+                d.errback(CannotCreateSessionException('error creating session: %s' % e))
         
         # if we already have a valid session fire it back immedaitely
         if self._session_is_valid():
@@ -184,10 +186,8 @@ class Auth(BaseAuth):
         # if not, attempt to request a new session
         else:
             request = AuthRequest(self)
-            request.set_headers({
-                'X-Auth-User': self.get_username(),
-                'X-Auth-Key': self._get_apikey(),
-            })
+            request.set_header(('X-Auth-User', self.get_username()))
+            request.set_header(('X-Auth-Key', self._get_apikey()))
             request.set_parser(_parse)
             self._waiting = True
             request.run()

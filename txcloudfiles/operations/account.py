@@ -26,7 +26,23 @@
 
 '''
 
-# todo
+from txcloudfiles.transport import Request, Response
+
+class AccountRequest(Request):
+    '''
+        Get account information request.
+    '''
+    
+    URI = '/'
+    METHOD = Request.HEAD
+    REQUIRED_HEADERS = ()
+    REQUIRED_BODY = False
+    EXPECTED_HEADERS = (
+        'X-Account-Container-Count',
+        'X-Account-Bytes-Used',
+    )
+    EXPECTED_BODY = False
+    EXPECTED_RESPONSE_CODE = Response.HTTP_NO_CONTENT
 
 '''
 

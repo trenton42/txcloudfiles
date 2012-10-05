@@ -30,12 +30,13 @@ from txcloudfiles.transport import Request, Response
 
 class AuthRequest(Request):
     '''
-        Attempts to get an authentication token from the auth service.
+        Get an authentication token.
     '''
     
     URI = '/'
     METHOD = Request.GET
     AUTH_REQUEST = True
+    MANAGEMENT_REQUEST = False
     REQUIRED_HEADERS = (
         'X-Auth-User',
         'X-Auth-Key',

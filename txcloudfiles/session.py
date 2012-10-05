@@ -20,28 +20,37 @@
 
 '''
 
-    A session is a self-verifying interface to the top level requests to the
-    API, such as account data and container information.
+    A session is a self-verifying authentication storage object as well as
+    containing top level request wrappers to construct Account() and Container()
+    objects.
 
 '''
 
 from time import time
-from errors import NotAuthenticatedException
+from urlparse import urlsplit
+from twisted.internet.defer import Deferred
+from errors import NotAuthenticatedException, RequestException
+from operations.account import AccountRequest
+from cfaccount import Account
 
 class Session(object):
     '''
-        An authentication session containing a authentication key on a timer.
-        Contains wrapper functions to access the top level account data.
+        Holds a single authentication session.
     '''
     
     # while the documentation says authtokens are valid for 24h
     # set it to 12h so it can't ever expire
     AUTH_TIMELIMIT = 5
     
-    def __init__(self, key='', storage_url='', management_url='', servicenet=False):
+    def __init__(self, username='', key='', storage_url='', management_url='', servicenet=''):
         self._timer = time() if key else 0
+        self._username = username if username else ''
         self._key = key if key else ''
-        self._servicenet = servicenet
+        self._storage_url = storage_url
+        self._management_url = management_url
+        self._storage_url_parts = urlsplit(storage_url)
+        self._management_url_parts = urlsplit(management_url)
+        self._servicenet = ''
     
     def _is_valid(self):
         if self._timer == 0 or not self._key:
@@ -60,7 +69,36 @@ class Session(object):
     def get_key(self):
         if self.is_valid():
             return self._key
-        return False
+        return ''
+    
+    def get_storage_url_parts(self):
+        if self._servicenet:
+            self._storage_url_parts.netloc = self._servicenet + self._storage_url_parts.netloc
+        return self._storage_url_parts
+    
+    def get_management_url_parts(self):
+        return self._management_url_parts
+    
+    ''' account wrappers '''
+    
+    def get_account(self):
+        d = Deferred()
+        
+        def _parse(r):
+            if r.OK:
+                a = Account()
+                a.set_container_count(r.headers.get('X-Account-Container-Count', ''))
+                a.set_bytes_used(r.headers.get('X-Account-Bytes-Used', ''))
+                d.callback(a)
+            elif r.status_code == 401:
+                d.errback(NotAuthenticatedException('failed to get account information, not authorised'))
+            else:
+                d.errback(RequestException('failed to get account information'))
+        
+        request = AccountRequest(self)
+        request.set_parser(_parse)
+        request.run()
+        return d
 
 '''
 

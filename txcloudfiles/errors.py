@@ -24,7 +24,7 @@
 
 '''
 
-''' general exceptions '''
+''' base error '''
 
 class CloudFilesException(Exception):
     '''
@@ -32,7 +32,7 @@ class CloudFilesException(Exception):
     '''
     pass
 
-''' Auth exceptions '''
+''' Auth errors '''
 
 class InvalidEndpointException(CloudFilesException):
     '''
@@ -51,17 +51,27 @@ class CannotCreateSessionException(CloudFilesException):
         Unable to create a new authentication session.
     '''
 
-''' transport exceptions '''
+''' transport errors '''
 
 class OperationConfigException(CloudFilesException):
     '''
-        An operation is not overriding a required method.
+        An operation is not overriding a required class constant.
     '''
     pass
+
+''' session errors '''
 
 class CreateRequestException(CloudFilesException):
     '''
         Request could not be created, required parameters missing.
+    '''
+    pass
+
+''' request errors '''
+
+class RequestException(CloudFilesException):
+    '''
+        An error occured in a request.
     '''
     pass
 
