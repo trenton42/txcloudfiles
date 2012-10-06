@@ -133,7 +133,7 @@ class BaseAuth(object):
         while True:
             try:
                 d = self._session_queue.pop()
-                d.callback(session)
+                d.callback(d)
             except IndexError:
                 break
     
@@ -155,7 +155,8 @@ class Auth(BaseAuth):
     def get_session(self):
         '''
             Returns a deferred which when fired returns an account object or
-            an authentication error.
+            an authentication error. Any extra arguments given are passed back
+            when the callback is fired.
         '''
         self.start_queue()
         d = Deferred()
@@ -192,6 +193,12 @@ class Auth(BaseAuth):
             self._waiting = True
             request.run()
         return d
+
+def get_auth(endpoint, username, apikey):
+    '''
+        Wrapper for the above classes.
+    '''
+    return Auth(Endpoint(endpoint), username, apikey)
 
 '''
 

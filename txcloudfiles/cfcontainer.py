@@ -26,40 +26,108 @@
 
 '''
 
+from helpers import parse_int, DataUsage
+from txcloudfiles.cfobject import Object
+
 class ContainerSet(object):
     '''
         An iterable of Container objects.
     '''
     
-    def __init__(self, data):
+    def __init__(self):
         self._containers = []
-        for line in data.split('\n'):
-            line = line.strip()
-            if line:
-                self._containers.append(Container(name=line))
+        self._requests = 0
+    
+    def add_containers(self, containers):
+        self._requests += 1
+        for container_data in containers:
+            container = Container(
+                name=container_data.get('name', ''),
+                object_count=parse_int(container_data.get('count', 0)),
+                bytes=container_data.get('bytes', 0)
+            )
+            if container.is_valid():
+                self._containers.append(container)
     
     def __repr__(self):
-        return '<CloudFiles %s object (%s Containers) at %s>' % (self.__class__.__name__, len(self._containers), hex(id(self)))
+        return '<CloudFiles %s object (%s containers) at %s>' % (self.__class__.__name__, len(self._containers), hex(id(self)))
     
     def __iter__(self):
         for c in self._containers:
             yield c
+    
+    def __len__(self):
+        return len(self._containers)
+    
+    def __getitem__(self, i):
+        return self._containers[i]
+    
+    def get_request_count(self):
+        return self._requests
+    
+    def get_last_container(self):
+        if len(self._containers) > 0:
+            return self._containers[-1]
+        return None
 
 class Container(object):
     '''
         A representation of a Cloud Files container.
     '''
-    def __init__(self, name=''):
+    
+    def __init__(self, name='', object_count=0, bytes=0):
+        self._objects = []
+        self._requests = 0
         self._name = name
+        self._object_count = object_count
+        self._data = DataUsage(bytes)
     
     def __repr__(self):
-        return '<CloudFiles %s object (%s) at %s>' % (self.__class__.__name__, self._name, hex(id(self)))
+        d = (self.__class__.__name__, self._name, self._object_count, self._data.b, hex(id(self)))
+        return '<CloudFiles %s object (%s: %s objects, %s bytes) at %s>' % d
+    
+    def add_objects(self, objects):
+        self._requests += 1
+        for object_data in objects:
+            obj = Object(
+                name=object_data.get('name', ''),
+                file_hash=object_data.get('hash', ''),
+                bytes=object_data.get('bytes', 0),
+                content_type=object_data.get('content_type', ''),
+                last_modified=object_data.get('last_modified', '')
+            )
+            if obj.is_valid():
+                self._objects.append(obj)
+    
+    def __iter__(self):
+        for o in self._objects:
+            yield o
+    
+    def __len__(self):
+        return len(self._objects)
+    
+    def __getitem__(self, i):
+        return self._objects[i]
     
     def __unicode__(self):
-        return u'%s' % self._name
+        return u'%s' % self.get_name()
     
     def __str__(self):
+        return self.get_name()
+    
+    def get_name(self):
         return self._name
+    
+    def is_valid(self):
+        return True if self._name else False
+    
+    def get_request_count(self):
+        return self._requests
+    
+    def get_last_object(self):
+        if len(self._objects) > 0:
+            return self._objects[-1]
+        return None
 
 '''
 

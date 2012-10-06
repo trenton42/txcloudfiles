@@ -20,9 +20,7 @@
 
 '''
 
-    Provides response validators and parsers for static website operation
-    requests. Static requests handle defining a publicly accessible website
-    from a Cloud Files container.
+    Provides request structure for static file operations.
 
 '''
 

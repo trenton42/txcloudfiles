@@ -30,7 +30,6 @@ class AuthRequest(Request):
     '''
         Get an authentication token.
     '''
-    URI = '/'
     METHOD = Request.GET
     AUTH_REQUEST = True
     MANAGEMENT_REQUEST = False

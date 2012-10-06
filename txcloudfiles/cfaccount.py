@@ -50,8 +50,8 @@ class Account(object):
     def get_container_count(self):
         return self._container_count
     
-    def get_data_used(self, bandwidth=DataUsage.BANDWIDTH_B):
-        return self._data_used.get_in(bandwidth)
+    def get_data_used(self):
+        return self._data_used
 
 '''
 

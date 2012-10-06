@@ -39,11 +39,11 @@ except ImportError:
         sys.path.insert(0, txcfpath)
 
 from hashlib import sha256
-from twisted.internet import reactor, defer
-from txcloudfiles import Endpoint, Auth, DataUsage
+from twisted.internet import reactor
+from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session(session):
-    print '> got session'
+    print '> got session: %s' % session
     random_key = sha256(os.urandom(256)).hexdigest()
     def _ok(v):
         # 'v' is just a boolean True, if there was an error errback() would
@@ -58,9 +58,8 @@ def _error(e):
     print e
     reactor.stop()
 
-e = Endpoint(Endpoint.UK)
-a = Auth(e, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))
-a.get_session().addCallback(_got_session).addErrback(_error)
+auth = get_auth(UK_ENDPOINT, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))
+auth.get_session().addCallback(_got_session).addErrback(_error)
 
 reactor.run()
 

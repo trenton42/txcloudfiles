@@ -28,8 +28,11 @@ __all__ = [
     'cfcontainer',
 ]
 
-from auth import Endpoint, Auth
+from auth import Endpoint, Auth, get_auth
 from helpers import DataUsage
+
+UK_ENDPOINT = Endpoint.UK
+US_ENDPOINT = Endpoint.US
 
 '''
 

@@ -21,9 +21,11 @@
 
 '''
 
-    Trivial example of how to request containers from a Cloud Files account. See:
+    Trivial example of how to all containers from a very large Cloud Files
+    account where it has more containers than can be returned in a single
+    request. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Retrieve_Account_Metadata-d1e1226.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/List_Large_Number_of_Containers-d1e1166.html
 
 '''
 
@@ -44,11 +46,12 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     def _ok(containerset):
-        print '> got container list'
+        print '> got %s containers in %s requests' % (len(containerset), containerset.get_request_count())
         for container in containerset:
             print container, '-', repr(container)
         reactor.stop()
-    session.list_containers().addCallback(_ok).addErrback(_error)
+    # 'limit' here is the number to return per request, min is 1, max is 10000
+    session.list_all_containers(limit=2).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     print 'error'

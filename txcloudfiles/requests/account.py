@@ -26,11 +26,10 @@
 
 from txcloudfiles.transport import Request, Response
 
-class AccountRequest(Request):
+class AccountMetadataRequest(Request):
     '''
         Get account information request.
     '''
-    URI = '/'
     METHOD = Request.HEAD
     REQUIRED_HEADERS = ()
     REQUIRED_BODY = False
@@ -45,7 +44,6 @@ class AccountSetTempURLKeyRequest(Request):
     '''
         Set a temporary URL key for an account.
     '''
-    URI = '/'
     METHOD = Request.POST
     REQUIRED_HEADERS = (
         'X-Account-Meta-Temp-Url-Key',

@@ -33,7 +33,9 @@ from twisted.internet.defer import Deferred
 from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
 from txcloudfiles import __version__
-from txcloudfiles.helpers import parse_int
+from txcloudfiles.helpers import parse_int, parse_str
+from txcloudfiles.cfcontainer import Container
+from txcloudfiles.cfobject import Object
 from txcloudfiles.errors import OperationConfigException, CreateRequestException
 
 # try and import the verifying SSL context from txverifyssl
@@ -47,7 +49,8 @@ USER_AGENT = 'txcloudfiles v%s' % __version__
 class Request(object):
     '''
         Transport layer which operations can use to make requests to the Cloud
-        Files API. Translates responses into dictionaries.
+        Files API. Translates responses into Response() or ResponseError()
+        objects.
     '''
     
     METHOD_GET = 'GET'
@@ -80,7 +83,7 @@ class Request(object):
     JSON = FORMAT_JSON
     
     # overridden by operations
-    URI = False
+    QUERY_STRING = False
     METHOD = False
     AUTH_REQUEST = False
     MANAGEMENT_REQUEST = False
@@ -100,18 +103,19 @@ class Request(object):
         self._request_post = {}
         self._request_parser = None
         self._waiting = False
+        self._query_string = {}
+        self._container = None
+        self._object = None
     
-    def _get_request_uri(self):
-        uri = getattr(self, 'URI', '')
-        try:
-            uri = str(uri)
-        except ValueError:
-            raise OperationConfigException('operation constant URI must be a str')
-        if not uri:
-            raise OperationConfigException('operation constant URI must contain a URI')
-        if uri == '/':
-            return ''
-        return uri
+    def _get_query_string(self):
+        static_qs = getattr(self, 'QUERY_STRING', False)
+        if static_qs:
+            if type(static_qs) != dict:
+                raise OperationConfigException('operation constant QUERY_STRING must be boolean False or a dictionary')
+            static_qs_str = '&'.join(('%s=%s' % (k,v) for k,v in static_qs.items()))
+        else:
+            static_qs_str = ''
+        return '&'.join(('%s=%s' % (k,v) for k,v in self._query_string.items())) + '&' + static_qs_str
     
     def _get_request_method(self):
         method = getattr(self, 'METHOD', '')
@@ -169,8 +173,17 @@ class Request(object):
             parts = self._session.get_storage_url_parts()
         else:
             parts = self._session.get_storage_url_parts()
-        path = parts.path + self._get_request_uri()
-        return urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
+        path = parts.path
+        if isinstance(self._container, Container):
+            path += '/' + self._container.get_name()
+            if isinstance(self._object, Object):
+                path += '/' + self._object.get_name()
+        qs = parts.query + self._get_query_string()
+        request_url = urlunsplit((parts.scheme, parts.netloc, path, qs, parts.fragment))
+        #print '-'*80
+        #print request_url
+        #print '-'*80
+        return parse_str(request_url)
     
     def _get_request_headers(self):
         return self._request_headers
@@ -184,6 +197,23 @@ class Request(object):
         if len(header) != 2:
             raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
         self._request_headers[header[0]] = header[1]
+    
+    def set_query_string(self, querystring=()):
+        if type(querystring) != tuple:
+            raise OperationConfigException('set_header() must be called with a tuple as the only argument')
+        if len(querystring) != 2:
+            raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
+        self._query_string[querystring[0]] = querystring[1]
+    
+    def set_container(self, container):
+        if not isinstance(container, Container):
+            raise OperationConfigException('set_container() must be called with a Container() instance as the only argument')
+        self._container = container
+    
+    def set_object(self, obj):
+        if not isinstance(obj, Object):
+            raise OperationConfigException('set_object() must be called with a Object() instance as the only argument')
+        self._object = obj
     
     def set_post(self, post={}):
         if type(post) != dict:
@@ -219,6 +249,9 @@ class Request(object):
     def _parse_response_data(self, data):
         if isinstance(data, Failure):
             binary_data, json_data = '', {}
+        #print '-'*80
+        #print data
+        #print '-'*80
         expected_body = self._get_expected_body()
         if expected_body == self.FORMAT_BINARY:
             binary_data, json_data = data, {}
@@ -248,7 +281,7 @@ class Request(object):
                 return status_code, 0
         if self._get_expected_body() == self.FORMAT_BINARY and not binary_data and status_code != 204:
             return status_code, 0
-        if self._get_expected_body() == self.FORMAT_JSON and not json_data and status_code != 204:
+        if self._get_expected_body() == self.FORMAT_JSON and type(json_data) != list and type(json_data) != dict and status_code != 204:
             return status_code, 0
         return status_code, status_code
     
@@ -359,6 +392,7 @@ class Response(object):
     HTTP_UNSUPPORTED_MEDA_TYPE = 415
     HTTP_REQUEST_RANGE_NOT_SATISFIABLE = 416
     HTTP_EXPECTATION_FAILED = 417
+    HTTP_RATE_LIMITED = 498
     HTTP_INTERNAL_SERVER_ERROR = 500
     HTTP_NOT_IMPLEMENTED = 501
     HTTP_BAD_GATEWAY = 502
@@ -407,6 +441,7 @@ class Response(object):
         HTTP_UNSUPPORTED_MEDA_TYPE,
         HTTP_REQUEST_RANGE_NOT_SATISFIABLE,
         HTTP_EXPECTATION_FAILED,
+        HTTP_RATE_LIMITED,
     )
     HTTP_SERVER_ERROR = (
         HTTP_INTERNAL_SERVER_ERROR,

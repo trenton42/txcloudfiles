@@ -55,6 +55,11 @@ class DataUsage(object):
     
     def __init__(self, bytes=0):
         self._bytes = parse_int(bytes)
+        self.b = self.get_in(self.BANDWIDTH_B)
+        self.kb = self.get_in(self.BANDWIDTH_KB)
+        self.mb = self.get_in(self.BANDWIDTH_MB)
+        self.gb = self.get_in(self.BANDWIDTH_GB)
+        self.tb = self.get_in(self.BANDWIDTH_TB)
     
     def get_in(self, bandwidth=0):
         if bandwidth not in self.BANDWIDTHS:

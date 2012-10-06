@@ -20,9 +20,7 @@
 
 '''
 
-    Provides response validators and parsers for container operation requests.
-    Container requests deal with deal with creating, listing, deleting and
-    updating Cloud Files containers.
+    Provides request structure for container operations.
 
 '''
 
@@ -30,14 +28,16 @@ from txcloudfiles.transport import Request, Response
 
 class ListContainersRequest(Request):
     '''
-        Set a temporary URL key for an account.
+        Get a list of containers.
     '''
-    URI = '/'
+    QUERY_STRING = {
+        'format': 'json',
+    }
     METHOD = Request.GET
     REQUIRED_HEADERS = ()
     REQUIRED_BODY = False
     EXPECTED_HEADERS = ()
-    EXPECTED_BODY = Response.FORMAT_BINARY
+    EXPECTED_BODY = Response.FORMAT_JSON
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 '''
