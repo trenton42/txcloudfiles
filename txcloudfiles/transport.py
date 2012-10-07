@@ -203,7 +203,8 @@ class Request(object):
             raise OperationConfigException('set_header() must be called with a tuple as the only argument')
         if len(querystring) != 2:
             raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
-        self._query_string[querystring[0]] = querystring[1]
+        if querystring[1]:
+            self._query_string[querystring[0]] = querystring[1]
     
     def set_container(self, container):
         if not isinstance(container, Container):

@@ -233,7 +233,7 @@ class Session(object):
     
     def list_objects(self, container=None, prefix='', path='', delimiter=''):
         '''
-            Returns an ObjectSet() object on success.
+            Returns a Container() populated with objects on success.
         '''
         if type(container) == str or type(container) == unicode:
             container = Container(name=container)
@@ -255,6 +255,9 @@ class Session(object):
         request = objects.ListObjectsRequest(self)
         request.set_parser(_parse)
         request.set_container(container)
+        request.set_query_string(('prefix', prefix))
+        request.set_query_string(('path', path))
+        request.set_query_string(('delimiter', delimiter))
         request.run()
         return d
     
