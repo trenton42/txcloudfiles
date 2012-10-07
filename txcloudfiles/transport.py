@@ -34,7 +34,7 @@ from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
 from txcloudfiles import __version__
 from txcloudfiles.validation import RequestBase, ResponseBase
-from txcloudfiles.helpers import parse_int
+from txcloudfiles.helpers import parse_int, Metadata
 
 # try and import the verifying SSL context from txverifyssl
 try:
@@ -50,35 +50,6 @@ class Request(RequestBase):
         Files API. Translates responses into Response() or ResponseError()
         objects.
     '''
-    
-    METHOD_GET = 'GET'
-    METHOD_PUT = 'PUT'
-    METHOD_POST = 'POST'
-    METHOD_DELETE = 'DELETE'
-    METHOD_HEAD = 'HEAD'
-    METHODS = (
-        METHOD_GET,
-        METHOD_PUT,
-        METHOD_POST,
-        METHOD_DELETE,
-        METHOD_HEAD,
-    )
-    
-    FORMAT_BINARY = 'binary'
-    FORMAT_JSON = 'json'
-    FORMATS = (
-        FORMAT_BINARY,
-        FORMAT_JSON
-    )
-    
-    # aliases
-    GET = METHOD_GET
-    PUT = METHOD_PUT
-    POST = METHOD_POST
-    DELETE = METHOD_DELETE
-    HEAD = METHOD_HEAD
-    BINARY = FORMAT_BINARY
-    JSON = FORMAT_JSON
     
     # overridden by operations
     QUERY_STRING = False
@@ -132,7 +103,7 @@ class Request(RequestBase):
             return {}
         for k,v in headers.items():
             headers[k.title()] = v if type(v) != list else v[0]
-        return headers
+        return headers, Metadata().loads(headers)
     
     def _verify_response(self, status_code, headers, binary_data, json_data):
         status_code = parse_int(status_code)
@@ -163,13 +134,14 @@ class Request(RequestBase):
                 normal behaviour for the API.
             '''
             binary_data, json_data = self._parse_response_data(data)
-            headers = self._parse_headers(factory.response_headers)
+            headers, metadata = self._parse_headers(factory.response_headers)
             actual_code, status_code = self._verify_response(factory.status, headers, binary_data, json_data)
             response_class = Response if status_code > 0 else ResponseError
             self._request_parser(response_class(
                 request=self,
                 status_code=actual_code,
                 headers=factory.response_headers,
+                metadata=metadata,
                 binary_body=binary_data,
                 json_body=json_data,
                 body_type=self._get_expected_body()
@@ -221,20 +193,14 @@ class Response(ResponseBase):
     
     OK = True
     
-    FORMAT_BINARY = 'binary'
-    FORMAT_JSON = 'json'
-    FORMATS = (
-        FORMAT_BINARY,
-        FORMAT_JSON
-    )
-    
-    def __init__(self, request=None, status_code=0, headers={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
+    def __init__(self, request=None, status_code=0, headers={}, metadata={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
         self.request = request
         if status_code in self.HTTP_RESPONSE_CODES:
             self.status_code = status_code
         else:
             self.status_code = 0
         self.headers = headers
+        self.metadata = metadata
         self.body = binary_body
         self.json = json_body
         self.body_type = body_type
