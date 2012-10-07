@@ -46,6 +46,8 @@ class AuthRequest(Request):
     EXPECTED_BODY = False
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
+''' response objects for auth are handled in txcloudfiles.auth instead '''
+
 '''
 
     EOF
