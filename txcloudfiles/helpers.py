@@ -38,6 +38,27 @@ def parse_str(x):
     except ValueError:
         return ''
 
+class Metadata(object):
+    
+    PREFIX = 'X-Container-Meta-'
+    
+    def is_metadata_header(self, header):
+        return k.title()[:len(self.PREFIX)] == self.PREFIX
+    
+    def loads(self, headers):
+        for k,v in headers.items():
+            k = k.replace(self.PREFIX, '')
+            headers[k] = v
+        return v
+    
+    def dumps(self, headers):
+        for k,v in headers.items():
+            k = k.title()
+            if self.is_metadata_header(k):
+                k = self.PREFIX + k
+            headers[k] = v
+        return v
+
 class DataUsage(object):
     
     BANDWIDTH_B = 1

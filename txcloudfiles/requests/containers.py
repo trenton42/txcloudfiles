@@ -40,17 +40,21 @@ class ListContainersRequest(Request):
         'format': 'json',
     }
     METHOD = Request.GET
-    REQUIRED_HEADERS = ()
-    REQUIRED_BODY = False
-    EXPECTED_HEADERS = ()
     EXPECTED_BODY = Response.FORMAT_JSON
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class CreateContainerRequest(Request):
+    '''
+        Create a new container.
+    '''
+    METHOD = Request.PUT
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
 
 def list_containers(session):
     '''
-        Returns a ContainerSet() object on success.
+        Returns a ContainerSet() object populated with Containers() on success.
     '''
     d = Deferred()
     def _parse(r):
@@ -71,8 +75,8 @@ def list_all_containers(session, limit=10000):
     '''
         A slower and more elaborate version of list_containers. Performs
         sucessive recursive requests on accounts with large numbers of
-        containers. Returns a single (and possibly very large)
-        ContainerSet() object.
+        containers. Returns a single (and possibly very large) ContainerSet()
+        populated with Containers() on success.
     '''
     limit = parse_int(limit)
     limit = session.CONTAINER_LIMIT if limit > session.CONTAINER_LIMIT else limit
@@ -100,21 +104,23 @@ def list_all_containers(session, limit=10000):
     request.run()
     return d
 
-def create_container(session, name=''):
+def create_container(session, name='', metadata={}):
     '''
         Creates a container and returns boolean True on success.
     '''
-    pass
+    
 
 def delete_container(session, container=None):
     '''
         Deletes a container and returns boolean True on success.
     '''
+    pass
 
 def _set_container_logging(session, container=None, enable=False):
     '''
         Enables or disables logging on a container.
     '''
+    pass
 
 def enable_logging(session, container=None):
     '''
@@ -133,6 +139,7 @@ def get_container_metadata(session, container=None):
     '''
         Returns a Container object on success populated with metadata.
     '''
+    pass
 
 def set_container_metadata(session, container=None, metadata={}):
     '''

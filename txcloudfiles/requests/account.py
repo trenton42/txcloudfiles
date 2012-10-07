@@ -63,7 +63,7 @@ class AccountSetTempURLKeyRequest(Request):
 
 def get_account_metadata(session):
     '''
-        Returns an Account object on success populated with metadata.
+        Returns an Account() object populated with metadata on success.
     '''
     d = Deferred()
     def _parse(r):
