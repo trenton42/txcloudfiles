@@ -31,19 +31,16 @@ class AuthRequest(Request):
         Get an authentication token.
     '''
     METHOD = Request.GET
-    AUTH_REQUEST = True
-    MANAGEMENT_REQUEST = False
+    REQUEST_TYPE = Request.REQUEST_AUTH
     REQUIRED_HEADERS = (
         'X-Auth-User',
         'X-Auth-Key',
     )
-    REQUIRED_BODY = False
     EXPECTED_HEADERS = (
         'X-Storage-Url',
         'X-Cdn-Management-Url',
         'X-Auth-Token',
     )
-    EXPECTED_BODY = False
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response objects for auth are handled in txcloudfiles.auth instead '''

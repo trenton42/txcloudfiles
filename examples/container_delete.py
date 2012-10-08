@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to request containers from a Cloud Files account. See:
+    Trivial example of how to create a container on a Cloud Files account. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Retrieve_Account_Metadata-d1e1226.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Delete_Container-d1e1765.htmlhttp://docs.rackspace.com/files/api/v1/cf-devguide/content/Create_Container-d1e1694.html
 
 '''
 
@@ -43,18 +43,18 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session(session):
     print '> got session: %s' % session
-    def _ok((response, containerset)):
+    container_name = 'some_test_container'
+    def _ok((response, v)):
         '''
             'response' is a transport.Response() instance.
-            'containerset' is a cfcontainer.ContainerSet() instance.
+            'v' is boolean True.
         '''
         print '> got response: %s' % response
-        print '> got container list'
-        for container in containerset:
-            print container, '-', repr(container)
+        print '> deleted container: %s' % container_name
         reactor.stop()
     print '> sending request'
-    session.list_containers().addCallback(_ok).addErrback(_error)
+    # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
+    session.delete_container(container=container_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''

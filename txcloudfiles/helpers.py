@@ -24,6 +24,7 @@
 
 '''
 
+from urllib import quote_plus
 from errors import CloudFilesException
 
 def parse_int(x):
@@ -38,26 +39,39 @@ def parse_str(x):
     except ValueError:
         return ''
 
+def parse_url_str(x):
+    return quote_plus(parse_str(x))[:256]
+
 class Metadata(object):
     
     PREFIX = 'X-Container-Meta-'
     
     def is_metadata_header(self, header):
-        return k.title()[:len(self.PREFIX)] == self.PREFIX
+        return header.title()[:len(self.PREFIX)] == self.PREFIX
+    
+    def prefix_header(self, header):
+        header = header.title()
+        if not self.is_metadata_header(header):
+            return self.PREFIX + header
+        return header
+    
+    def parse_header(self, header):
+        header = header.title()
+        if self.is_metadata_header(header):
+            return header[len(self.PREFIX):].lower()
+        return header
     
     def loads(self, headers):
+        meta_headers = {}
         for k,v in headers.items():
-            k = k.replace(self.PREFIX, '')
-            headers[k] = v
-        return v
+            if self.is_metadata_header(k):
+                meta_headers[self.parse_header(k)] = v
+        return meta_headers
     
     def dumps(self, headers):
         for k,v in headers.items():
-            k = k.title()
-            if self.is_metadata_header(k):
-                k = self.PREFIX + k
-            headers[k] = v
-        return v
+            headers[self.prefix_header(k)] = v
+        return headers
 
 class DataUsage(object):
     

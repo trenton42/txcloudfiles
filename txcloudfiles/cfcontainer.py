@@ -26,7 +26,7 @@
 
 '''
 
-from helpers import parse_int, DataUsage
+from helpers import parse_int, parse_url_str, DataUsage
 from txcloudfiles.cfobject import Object
 
 class ContainerSet(object):
@@ -75,12 +75,13 @@ class Container(object):
         A representation of a Cloud Files container.
     '''
     
-    def __init__(self, name='', object_count=0, bytes=0):
+    def __init__(self, name='', object_count=0, bytes=0, metadata={}):
         self._objects = []
         self._requests = 0
-        self._name = name
+        self._name = parse_url_str(name)
         self._object_count = object_count
         self._data = DataUsage(bytes)
+        self._metadata = metadata
     
     def __repr__(self):
         d = (self.__class__.__name__, self._name, self._object_count, self._data.b, hex(id(self)))
@@ -117,6 +118,9 @@ class Container(object):
     
     def get_name(self):
         return self._name
+    
+    def get_metadata(self):
+        return self._metadata
     
     def is_valid(self):
         return True if self._name else False

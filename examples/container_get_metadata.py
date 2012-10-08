@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to request containers from a Cloud Files account. See:
+    Trivial example of how to request container meta data. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Retrieve_Account_Metadata-d1e1226.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Update_Container_Metadata-d1e1900.html
 
 '''
 
@@ -39,22 +39,24 @@ except ImportError:
         sys.path.insert(0, txcfpath)
 
 from twisted.internet import reactor
-from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
+from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT, DataUsage
 
 def _got_session(session):
     print '> got session: %s' % session
-    def _ok((response, containerset)):
+    container_name = 'some_test_container'
+    def _ok((response, container)):
         '''
             'response' is a transport.Response() instance.
-            'containerset' is a cfcontainer.ContainerSet() instance.
+            'container' is a cfaccount.Container() instance.
         '''
         print '> got response: %s' % response
-        print '> got container list'
-        for container in containerset:
-            print container, '-', repr(container)
+        print '> got container: %s' % container
+        for k,v in container.get_metadata().items():
+            print '%s -> %s' % (k, v)
         reactor.stop()
     print '> sending request'
-    session.list_containers().addCallback(_ok).addErrback(_error)
+    # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
+    session.get_container_metadata(container=container_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''

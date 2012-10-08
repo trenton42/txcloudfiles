@@ -51,14 +51,14 @@ class Session(object):
     # maximum allowed TTL for CDN containers in seconds (from API docs)
     CDN_TTL_MAX = 1576800000
     
-    def __init__(self, username='', key='', storage_url='', management_url='', servicenet=''):
+    def __init__(self, username='', key='', storage_url='', cdn_url='', servicenet=''):
         self._timer = time() if key else 0
         self._username = username if username else ''
         self._key = key if key else ''
         self._storage_url = storage_url
-        self._management_url = management_url
+        self._cdn_url = cdn_url
         self._storage_url_parts = urlsplit(storage_url)
-        self._management_url_parts = urlsplit(management_url)
+        self._cdn_url_parts = urlsplit(cdn_url)
         self._servicenet = ''
     
     def _is_valid(self):
@@ -91,8 +91,8 @@ class Session(object):
             self._storage_url_parts.netloc = self._servicenet + self._storage_url_parts.netloc
         return self._storage_url_parts
     
-    def get_management_url_parts(self):
-        return self._management_url_parts
+    def get_cdn_url_parts(self):
+        return self._cdn_url_parts
     
     ''' account requests '''
     
@@ -105,10 +105,10 @@ class Session(object):
     list_all_containers = containers.list_all_containers
     create_container = containers.create_container
     delete_container = containers.delete_container
-    enable_logging = containers.enable_logging
-    enable_logging = containers.enable_logging
     get_container_metadata = containers.get_container_metadata
     set_container_metadata = containers.set_container_metadata
+    enable_container_logging = containers.enable_container_logging
+    disable_container_logging = containers.disable_container_logging
     
     ''' object requests '''
     

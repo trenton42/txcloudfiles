@@ -43,16 +43,28 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT, DataUsage
 
 def _got_session(session):
     print '> got session: %s' % session
-    def _ok(account):
+    def _ok((response, account)):
+        '''
+            'response' is a transport.Response() instance.
+            'account' is a cfaccount.Account() instance.
+        '''
+        print '> got response: %s' % response
         print '> got account: %s' % account
         print 'number of containers:', account.get_container_count()
         print 'megabytes used:', account.get_data_used().mb
         reactor.stop()
+    print '> sending request'
     session.get_account_metadata().addCallback(_ok).addErrback(_error)
 
 def _error(e):
-    print 'error'
-    print e
+    '''
+        'e' here will be a twisted.python.failure.Failure() instance wrapping
+        a ResponseError() object. ResponseError() instances contain information
+        about the request to help you find out why it errored through its 
+        ResponseError().request attribute.
+    '''
+    print 'error!'
+    print e.printTraceback()
     reactor.stop()
 
 auth = get_auth(UK_ENDPOINT, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))

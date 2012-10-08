@@ -27,8 +27,9 @@
 
 from urlparse import urlsplit, urlunsplit
 from txcloudfiles.cfcontainer import Container
-from txcloudfiles.helpers import parse_int, parse_str
+from txcloudfiles.helpers import parse_int, parse_str, Metadata
 from txcloudfiles.cfobject import Object
+from txcloudfiles.cfcontainer import Container
 from txcloudfiles.errors import OperationConfigException, CreateRequestException
 
 class DataFormatMixin(object):
@@ -44,6 +45,14 @@ class DataFormatMixin(object):
     )
     BINARY = FORMAT_BINARY
     JSON = FORMAT_JSON
+    REQUEST_AUTH = 0
+    REQUEST_STORAGE = 1
+    REQUEST_CDN = 2
+    REQUEST_TYPES = (
+        REQUEST_AUTH,
+        REQUEST_STORAGE,
+        REQUEST_CDN,
+    )
 
 class HTTPMethodMixin(object):
     '''
@@ -198,8 +207,11 @@ class GetValidationMixin(object):
             raise OperationConfigException('operation constant METHOD must contain a valid METHOD')
         return method
     
-    def _get_request_auth(self):
-        return True if getattr(self, 'AUTH_REQUEST', False) else False
+    def _get_request_type(self):
+        request_type = getattr(self, 'REQUEST_TYPE', '')
+        if request_type not in self.REQUEST_TYPES:
+            raise OperationConfigException('operation constant REQUEST_TYPE must contain a valid REQUEST_TYPE')
+        return request_type
     
     def _get_request_management(self):
         return True if getattr(self, 'MANAGEMENT_REQUEST', False) else False
@@ -240,26 +252,6 @@ class GetValidationMixin(object):
             return expected_response_code
         raise OperationConfigException('operataion constant EXPECTED_RESPONSE_CODE valid integer or tuple of integers')
     
-    def _get_request_url(self):
-        if self._get_request_auth():
-            endpoint = self._session.get_endpoint()
-            return endpoint.get_auth_url()
-        if self._get_request_management():
-            parts = self._session.get_storage_url_parts()
-        else:
-            parts = self._session.get_storage_url_parts()
-        path = parts.path
-        if isinstance(self._container, Container):
-            path += '/' + self._container.get_name()
-            if isinstance(self._object, Object):
-                path += '/' + self._object.get_name()
-        qs = parts.query + self._get_query_string()
-        request_url = urlunsplit((parts.scheme, parts.netloc, path, qs, parts.fragment))
-        #print '-'*80
-        #print request_url
-        #print '-'*80
-        return parse_str(request_url)
-    
     def _get_request_headers(self):
         return self._request_headers
     
@@ -278,6 +270,13 @@ class SetValidationMixin(object):
         if len(header) != 2:
             raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
         self._request_headers[header[0]] = header[1]
+    
+    def set_metadata(self, metadata=()):
+        if type(metadata) != tuple:
+            raise OperationConfigException('set_metadata() must be called with a tuple as the only argument')
+        if len(metadata) != 2:
+            raise OperationConfigException('set_metadata() headers must be a tuple with exactly two values')
+        self._request_headers[Metadata().prefix_header(metadata[0])] = metadata[1]
     
     def set_query_string(self, querystring=()):
         if type(querystring) != tuple:

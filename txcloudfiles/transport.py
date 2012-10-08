@@ -34,7 +34,7 @@ from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
 from txcloudfiles import __version__
 from txcloudfiles.validation import RequestBase, ResponseBase
-from txcloudfiles.helpers import parse_int, Metadata
+from txcloudfiles.helpers import parse_int, parse_str, Metadata
 
 # try and import the verifying SSL context from txverifyssl
 try:
@@ -54,13 +54,12 @@ class Request(RequestBase):
     # overridden by operations
     QUERY_STRING = False
     METHOD = False
-    AUTH_REQUEST = False
-    MANAGEMENT_REQUEST = False
     REQUIRED_HEADERS = ()
     REQUIRED_POST = False
     EXPECTED_HEADERS = ()
     EXPECTED_BODY = False
     EXPECTED_RESPONSE_CODE = False
+    REQUEST_TYPE = False
     
     # optionally overridden
     TIMEOUT = 15
@@ -76,6 +75,26 @@ class Request(RequestBase):
         self._container = None
         self._object = None
     
+    def _get_request_url(self):
+        request_type = self._get_request_type()
+        if request_type == Request.REQUEST_AUTH:
+            return self._session.get_endpoint().get_auth_url()
+        elif request_type == Request.REQUEST_CDN:
+            parts = self._session.get_cdn_url_parts()
+        else:
+            parts = self._session.get_storage_url_parts()
+        path = parts.path
+        if hasattr(self._container, 'get_name'):
+            path += '/' + self._container.get_name()
+            if hasattr(self._object, 'get_name'):
+                path += '/' + self._object.get_name()
+        qs = parts.query + self._get_query_string()
+        request_url = urlunsplit((parts.scheme, parts.netloc, path, qs, parts.fragment))
+        #print '-'*80
+        #print request_url
+        #print '-'*80
+        return parse_str(request_url)
+    
     def _construct_post_data(self):
         data = self._get_request_post()
         if type(data) == dict:
@@ -83,8 +102,7 @@ class Request(RequestBase):
         return ''
     
     def _parse_response_data(self, data):
-        if isinstance(data, Failure):
-            binary_data, json_data = '', {}
+        binary_data, json_data = '', {}
         #print '-'*80
         #print data
         #print '-'*80
@@ -102,7 +120,8 @@ class Request(RequestBase):
         if type(headers) != dict:
             return {}
         for k,v in headers.items():
-            headers[k.title()] = v if type(v) != list else v[0]
+            headers[k.title()] = v[0] if type(v) == list else v
+            del headers[k]
         return headers, Metadata().loads(headers)
     
     def _verify_response(self, status_code, headers, binary_data, json_data):
@@ -147,7 +166,8 @@ class Request(RequestBase):
                 body_type=self._get_expected_body()
             ))
         
-        if not self._get_request_auth():
+        request_type = self._get_request_type()
+        if request_type == Request.REQUEST_STORAGE or request_type == Request.REQUEST_CDN:
             self.set_header(('X-Auth-Token', self._session.get_key()))
         url = self._get_request_url()
         factory = HTTPClientFactory(

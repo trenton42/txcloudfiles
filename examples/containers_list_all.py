@@ -45,17 +45,29 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session(session):
     print '> got session: %s' % session
-    def _ok(containerset):
+    def _ok((response, containerset)):
+        '''
+            'response' is a transport.Response() instance.
+            'containerset' is a cfcontainer.ContainerSet() instance.
+        '''
+        print '> got response: %s' % response
         print '> got %s containers in %s requests' % (len(containerset), containerset.get_request_count())
         for container in containerset:
             print container, '-', repr(container)
         reactor.stop()
+    print '> sending request'
     # 'limit' here is the number to return per request, min is 1, max is 10000
     session.list_all_containers(limit=2).addCallback(_ok).addErrback(_error)
 
 def _error(e):
-    print 'error'
-    print e
+    '''
+        'e' here will be a twisted.python.failure.Failure() instance wrapping
+        a ResponseError() object. ResponseError() instances contain information
+        about the request to help you find out why it errored through its 
+        ResponseError().request attribute.
+    '''
+    print 'error!'
+    print e.printTraceback()
     reactor.stop()
 
 auth = get_auth(UK_ENDPOINT, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))

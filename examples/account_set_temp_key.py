@@ -45,17 +45,28 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     random_key = sha256(os.urandom(256)).hexdigest()
-    def _ok(v):
-        # 'v' is just a boolean True, if there was an error errback() would
-        # have been fired
+    def _ok((response, v)):
+        '''
+            'response' is a transport.Response() instance.
+            'v' is boolean True.
+        '''
+        print '> got response: %s' % response
         print '> set temp url key to:'
         print random_key
         reactor.stop()
-    session.set_temp_url_key(random_key).addCallback(_ok).addErrback(_error)
+    print '> sending request'
+    # 'key' here is any random string to set as the temporary URL key
+    session.set_temp_url_key(key=random_key).addCallback(_ok).addErrback(_error)
 
 def _error(e):
-    print 'error'
-    print e
+    '''
+        'e' here will be a twisted.python.failure.Failure() instance wrapping
+        a ResponseError() object. ResponseError() instances contain information
+        about the request to help you find out why it errored through its 
+        ResponseError().request attribute.
+    '''
+    print 'error!'
+    print e.printTraceback()
     reactor.stop()
 
 auth = get_auth(UK_ENDPOINT, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))

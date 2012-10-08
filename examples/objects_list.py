@@ -43,7 +43,10 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session1(session):
     print '> got session 1: %s' % session
-    def _ok(containerset):
+    def _ok((response, containerset)):
+        '''
+            'containerset' is a cfcontainer.ContainerSet() instance.
+        '''
         print '> got containerset: %s' % containerset
         if len(containerset) > 0:
             first_container = containerset[0]
@@ -60,16 +63,28 @@ def _got_session1(session):
 
 def _got_session2(session, first_container):
     print '> got session 2: %s' % session
-    def _ok(container):
+    def _ok((response, container)):
+        '''
+            'response' is a transport.Response() instance.
+            'container' is a cfcontainer.Container() instance.
+        '''
+        print '> got response: %s' % response
         print '> got container populated with objects: %s' % container
         for obj in container:
             print obj, repr(obj)
         reactor.stop()
+    print '> sending request'
     session.list_objects(first_container).addCallback(_ok).addErrback(_error)
 
 def _error(e):
-    print 'error'
-    print e
+    '''
+        'e' here will be a twisted.python.failure.Failure() instance wrapping
+        a ResponseError() object. ResponseError() instances contain information
+        about the request to help you find out why it errored through its 
+        ResponseError().request attribute.
+    '''
+    print 'error!'
+    print e.printTraceback()
     reactor.stop()
 
 auth = get_auth(UK_ENDPOINT, os.environ.get('TXCFUSR', ''), os.environ.get('TXCFAPI', ''))

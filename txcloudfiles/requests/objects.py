@@ -26,7 +26,7 @@
 
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
-from txcloudfiles.errors import NotAuthenticatedException, RequestException
+from txcloudfiles.errors import NotAuthenticatedException, ResponseException
 from txcloudfiles.helpers import parse_int, parse_str
 from txcloudfiles.cfaccount import Account
 from txcloudfiles.cfcontainer import Container, ContainerSet
@@ -41,9 +41,7 @@ class ListObjectsRequest(Request):
         'format': 'json',
     }
     METHOD = Request.GET
-    REQUIRED_HEADERS = ()
-    REQUIRED_BODY = False
-    EXPECTED_HEADERS = ()
+    REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_BODY = Response.FORMAT_JSON
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
@@ -65,11 +63,11 @@ def list_objects(session, container=None, prefix='', path='', delimiter=''):
         if r.OK:
             container = Container()
             container.add_objects(r.json)
-            d.callback(container)
+            d.callback((r, container))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
         else:
-            d.errback(RequestException('failed to get a list of objects'))
+            d.errback(ResponseException('failed to get a list of objects'))
     request = ListObjectsRequest(session)
     request.set_parser(_parse)
     request.set_container(container)

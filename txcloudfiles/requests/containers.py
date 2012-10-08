@@ -26,7 +26,7 @@
 
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
-from txcloudfiles.errors import NotAuthenticatedException, RequestException
+from txcloudfiles.errors import NotAuthenticatedException, ResponseException
 from txcloudfiles.helpers import parse_int, parse_str
 from txcloudfiles.cfcontainer import Container, ContainerSet
 
@@ -40,6 +40,7 @@ class ListContainersRequest(Request):
         'format': 'json',
     }
     METHOD = Request.GET
+    REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_BODY = Response.FORMAT_JSON
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
@@ -48,6 +49,31 @@ class CreateContainerRequest(Request):
         Create a new container.
     '''
     METHOD = Request.PUT
+    REQUEST_TYPE = Request.REQUEST_STORAGE
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class DeleteContainerRequest(Request):
+    '''
+        Delete an existing empty container.
+    '''
+    METHOD = Request.DELETE
+    REQUEST_TYPE = Request.REQUEST_STORAGE
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class ContainerMetadataRequest(Request):
+    '''
+        Get container metadata.
+    '''
+    METHOD = Request.HEAD
+    REQUEST_TYPE = Request.REQUEST_STORAGE
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class UpdateContainerMetadataRequest(Request):
+    '''
+        Update container metadata.
+    '''
+    METHOD = Request.POST
+    REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
@@ -61,11 +87,11 @@ def list_containers(session):
         if r.OK:
             containerset = ContainerSet()
             containerset.add_containers(r.json)
-            d.callback(containerset)
+            d.callback((r, containerset))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get a list of containers, not authorised'))
         else:
-            d.errback(RequestException('failed to get a list of containers'))
+            d.errback(ResponseException('failed to get a list of containers'))
     request = ListContainersRequest(session)
     request.set_parser(_parse)
     request.run()
@@ -93,11 +119,11 @@ def list_all_containers(session, limit=10000):
                 request.set_query_string(('marker', containerset.get_last_container().get_name()))
                 request.run()
             else:
-                d.callback(containerset)
+                d.callback((r, containerset))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get a block of containers, not authorised'))
         else:
-            d.errback(RequestException('failed to get a block of containers'))
+            d.errback(ResponseException('failed to get a block of containers'))
     request = ListContainersRequest(session)
     request.set_parser(_parse)
     request.set_query_string(('limit', limit))
@@ -108,45 +134,116 @@ def create_container(session, name='', metadata={}):
     '''
         Creates a container and returns boolean True on success.
     '''
-    
+    name = parse_str(name)
+    container = Container(name=name)
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to create container, not authorised'))
+        else:
+            d.errback(ResponseException('failed to create container'))
+    request = CreateContainerRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    for k,v in metadata.items():
+        request.set_metadata((k, v))
+    request.run()
+    return d
 
 def delete_container(session, container=None):
     '''
         Deletes a container and returns boolean True on success.
     '''
-    pass
-
-def _set_container_logging(session, container=None, enable=False):
-    '''
-        Enables or disables logging on a container.
-    '''
-    pass
-
-def enable_logging(session, container=None):
-    '''
-        Wrapper for _set_container_logging to enable logging and returns
-        boolean True on success.
-    '''
-    return _set_container_logging(container, True)
-
-def disable_logging(session, container=None):
-    '''
-        Wrapper for _set_container_logging to disable logging.
-    '''
-    return _set_container_logging(container, False)
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to delete container, not authorised'))
+        elif r.status_code == 404:
+            d.errback(ResponseException('failed to delete container, container does not exist'))
+        elif r.status_code == 409:
+            d.errback(ResponseException('failed to delete container, container is not empty'))
+        else:
+            d.errback(ResponseException('failed to delete container'))
+    request = DeleteContainerRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.run()
+    return d
 
 def get_container_metadata(session, container=None):
     '''
         Returns a Container object on success populated with metadata.
     '''
-    pass
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            container_name = r.request._container.get_name()
+            container = Container(name=container_name, metadata=r.metadata)
+            d.callback((r, container))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get container metadata, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to get container metadata, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to get container metadata'))
+    request = ContainerMetadataRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.run()
+    return d
 
 def set_container_metadata(session, container=None, metadata={}):
     '''
         Sets custom arbitrary metadata on a container and returns boolean
         True on success.
     '''
-    pass
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to set container metadata, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to set container metadata, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to set container metadata'))
+    request = UpdateContainerMetadataRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    for k,v in metadata.items():
+        request.set_metadata((k, v))
+    request.run()
+    return d
+
+def enable_container_logging(session, container=None):
+    '''
+        Wrapper for set_container_metadata to enable logging and returns
+        boolean True on success.
+    '''
+    return set_container_metadata(session, container, {'X-Container-Meta-Access-Log-Delivery': True})
+
+def disable_container_logging(session, container=None):
+    '''
+        Wrapper for set_container_metadata to disable logging and returns
+        boolean True on success.
+    '''
+    return set_container_metadata(session, container, {'X-Container-Meta-Access-Log-Delivery': False})
 
 '''
 

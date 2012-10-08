@@ -24,15 +24,11 @@
 
 '''
 
-''' base error '''
-
 class CloudFilesException(Exception):
     '''
         Root catchable exception.
     '''
     pass
-
-''' Auth errors '''
 
 class InvalidEndpointException(CloudFilesException):
     '''
@@ -59,19 +55,21 @@ class OperationConfigException(CloudFilesException):
     '''
     pass
 
-''' session errors '''
-
 class CreateRequestException(CloudFilesException):
     '''
         Request could not be created, required parameters missing.
     '''
     pass
 
-''' request errors '''
-
 class RequestException(CloudFilesException):
     '''
         An error occured in a request.
+    '''
+    pass
+
+class ResponseException(CloudFilesException):
+    '''
+        An error occured in a response.
     '''
     pass
 

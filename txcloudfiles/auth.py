@@ -168,7 +168,7 @@ class Auth(BaseAuth):
                     username=self.get_username(),
                     key=r.headers.get('X-Auth-Token', ''),
                     storage_url=r.headers.get('X-Storage-Url', ''),
-                    management_url=r.headers.get('X-Cdn-Management-Url', ''),
+                    cdn_url=r.headers.get('X-Cdn-Management-Url', ''),
                     servicenet=Endpoint.SNET_PREFIX if self.use_servicenet() else ''
                 ))
                 # send the session off to the callback
