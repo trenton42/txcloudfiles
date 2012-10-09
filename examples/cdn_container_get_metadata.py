@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to request container meta data. See:
+    Trivial example of how to request CDN-enabled container meta data. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/CDN-Enable_a_Container-d1e2665.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/List_CDN-Enabled_Container_Metadata-d1e2711.html
 
 '''
 
@@ -50,16 +50,13 @@ def _got_session(session):
             'container' is a cfaccount.Container() instance.
         '''
         print '> got response: %s' % response
-        if response.status_code == 201:
-            print '> CDN-enabled container: %s' % container
-        elif response.status_code == 202:
-            print '> container already CDN-enabled, updated TTL: %s' % container
-        print container.get_cdn_url()
+        print '> got container: %s' % container
+        for k,v in container.get_metadata().items():
+            print '%s -> %s' % (k, v)
         reactor.stop()
     print '> sending request'
     # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
-    # ttl is the container TTL in seconds, logging can be used to enable or disable container logging.
-    session.enable_cdn_container(container=container_name, ttl=900, logging=True).addCallback(_ok).addErrback(_error)
+    session.get_container_metadata(container=container_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''

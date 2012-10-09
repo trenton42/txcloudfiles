@@ -4,13 +4,13 @@ txcloudfiles tests
 These tests require valid Cloud Files account details to be stored in
 environment variables to complete. For example under any decent *NIX shell:
 
-export TXCFUSR="username"
-export TXCFAPI="apikey"
+```bash
+$ export TXCFUSR="username"
+$ export TXCFAPI="apikey"
+```
 
-The tests will interact with the account as well as randomly named containers
-and storage objects all prefixed with 'txcftest_'. Should, by some feakish
-chance, have containers or objects prefixed with 'txcftest_' you should for
-obvious reasons not run these tests.
+The tests will interact with the live, real account. It is highly advisable to
+not run these tests if you have data in your account.
 
 While this is not ideal and violates some principles of testing methodology none
 of the examples provided nor mocking provide the required depth and detailed
