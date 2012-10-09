@@ -56,6 +56,19 @@ class EnableCDNContainerRequest(Request):
     REQUEST_TYPE = Request.REQUEST_CDN
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
+class CDNContainerMetadataRequest(Request):
+    '''
+        Get account metadata request.
+    '''
+    METHOD = Request.HEAD
+    REQUEST_TYPE = Request.REQUEST_CDN
+    EXPECTED_HEADERS = (
+        'X-Cdn-Uri',
+        'X-Cdn-Ssl-Uri',
+        'X-Cdn-Streaming-Uri',
+    )
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
 ''' response object wrappers '''
 
 def list_cdn_containers(session):
@@ -128,9 +141,38 @@ def disable_cdn_container(session, container=None):
 
 def get_cdn_container_metadata(session, container=None):
     '''
-        Returns a Container object on success populated with metadata.
+        Returns a Container() object on success populated with metadata.
     '''
-    pass
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            container = Container(
+                name=r.request._container.get_name(),
+                object_count=0,
+                bytes=0,
+                cdn=r.headers.get('X-Cdn-Enabled', False),
+                logging=r.headers.get('X-Log-Retention', False),
+                ttl=parse_int(r.headers.get('X-Ttl', 0)),
+                cdn_uri=r.headers.get('X-Cdn-Uri', ''),
+                ssl_uri=r.headers.get('X-Cdn-Ssl-Uri', ''),
+                stream_uri=r.headers.get('X-Cdn-Streaming-Uri', '')
+            )
+            d.callback((r, container))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get CDN container, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to get CDN container, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to get CDN container'))
+    request = CDNContainerMetadataRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.run()
+    return d
 
 def set_cdn_container_metadata(session, container=None, metadata={}):
     '''

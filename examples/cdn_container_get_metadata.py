@@ -50,13 +50,16 @@ def _got_session(session):
             'container' is a cfaccount.Container() instance.
         '''
         print '> got response: %s' % response
-        print '> got container: %s' % container
-        for k,v in container.get_metadata().items():
-            print '%s -> %s' % (k, v)
+        print '> got CDN-enabled container: %s' % container
+        print 'URL:', container.get_cdn_url()
+        print 'SSL URL:', container.get_ssl_url()
+        print 'streaming URL:', container.get_stream_url()
+        print 'TTL:', container.get_ttl()
+        print 'logging:',  container.get_logging()
         reactor.stop()
     print '> sending request'
     # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
-    session.get_container_metadata(container=container_name).addCallback(_ok).addErrback(_error)
+    session.get_cdn_container_metadata(container=container_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
