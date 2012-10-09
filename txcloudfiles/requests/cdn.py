@@ -28,26 +28,42 @@ from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
 from txcloudfiles.errors import NotAuthenticatedException, RequestException
 from txcloudfiles.helpers import parse_int, parse_str
-from txcloudfiles.cfaccount import Account
+from txcloudfiles.cfcontainer import Container, ContainerSet
 
 ''' requests '''
+
+class ListCDNContainersRequest(Request):
+    '''
+        Get a list of containers.
+    '''
+    QUERY_STRING = {
+        'format': 'json',
+    }
+    METHOD = Request.GET
+    REQUEST_TYPE = Request.REQUEST_CDN
+    EXPECTED_BODY = Response.FORMAT_JSON
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
 
 def list_cdn_containers(session):
     '''
-        Returns a ContainerSet() object on success.
+        Returns a ContainerSet() object populated with Containers() on success.
     '''
-    pass
-
-def list_all_cdn_containers(session, limit=0):
-    '''
-        A slower and more elaborate version of list_cdn_containers. Performs
-        sucessive recursive requests on accounts with large numbers of CDN
-        enabled containers. Returns a single (and possibly very large)
-        ContainerSet() object.
-    '''
-    pass
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            containerset = ContainerSet()
+            containerset.add_containers(r.json)
+            d.callback((r, containerset))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get a list of CDN containers, not authorised'))
+        else:
+            d.errback(ResponseException('failed to get a list of CDN containers'))
+    request = ListCDNContainersRequest(session)
+    request.set_parser(_parse)
+    request.run()
+    return d
 
 def enable_cdn_container(session, container=None, ttl=0):
     '''

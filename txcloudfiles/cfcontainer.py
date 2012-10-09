@@ -44,7 +44,13 @@ class ContainerSet(object):
             container = Container(
                 name=container_data.get('name', ''),
                 object_count=parse_int(container_data.get('count', 0)),
-                bytes=container_data.get('bytes', 0)
+                bytes=container_data.get('bytes', 0),
+                cdn=container_data.get('cdn_enabled', False),
+                logging=container_data.get('log_retention', False),
+                ttl=parse_int(container_data.get('ttlparse_bool', 0)),
+                cdn_uri=container_data.get('cdn_uri', ''),
+                ssl_uri=container_data.get('cdn_ssl_uri', ''),
+                stream_uri=container_data.get('cdn_streaming_uri', '')
             )
             if container.is_valid():
                 self._containers.append(container)
@@ -75,17 +81,25 @@ class Container(object):
         A representation of a Cloud Files container.
     '''
     
-    def __init__(self, name='', object_count=0, bytes=0, metadata={}):
+    def __init__(self, name='', object_count=0, bytes=0, metadata={}, cdn=False, logging=False, ttl=0, cdn_uri='', ssl_uri='', stream_uri=''):
         self._objects = []
         self._requests = 0
         self._name = parse_url_str(name)
         self._object_count = object_count
         self._data = DataUsage(bytes)
         self._metadata = metadata
+        self._cdn = cdn
+        self._logging = logging
+        self._ttl = ttl
+        self._cdn_uri = cdn_uri
+        self._ssl_uri = ssl_uri
+        self._stream_uri = stream_uri
     
     def __repr__(self):
-        d = (self.__class__.__name__, self._name, self._object_count, self._data.b, hex(id(self)))
-        return '<CloudFiles %s object (%s: %s objects, %s bytes) at %s>' % d
+        _state = 'public' if self._cdn else 'private'
+        _id = hex(id(self))
+        d = (self.__class__.__name__, self._name, self._object_count, self._data.b, _state, _id)
+        return '<CloudFiles %s object (%s: %s objects, %s bytes, %s) at %s>' % d
     
     def add_objects(self, objects):
         self._requests += 1
@@ -121,6 +135,24 @@ class Container(object):
     
     def get_metadata(self):
         return self._metadata
+    
+    def get_cdn(self):
+        return self._cdn
+    
+    def get_logging(self):
+        return self._logging
+    
+    def get_ttl(self):
+        return self._ttl
+    
+    def get_cdn_url(self):
+        return self._cdn_uri
+    
+    def get_ssl_url(self):
+        return self._ssl_uri
+    
+    def get_stream_url(self):
+        return self._stream_uri
     
     def is_valid(self):
         return True if self._name else False

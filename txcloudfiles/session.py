@@ -123,7 +123,6 @@ class Session(object):
     ''' cdn requests '''
     
     list_cdn_containers = cdn.list_cdn_containers
-    list_all_cdn_containers = cdn.list_all_cdn_containers
     enable_cdn_container = cdn.enable_cdn_container
     disable_cdn_container = cdn.disable_cdn_container
     get_cdn_container_metadata = cdn.get_cdn_container_metadata
