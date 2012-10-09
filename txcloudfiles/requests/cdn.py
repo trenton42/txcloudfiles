@@ -26,7 +26,7 @@
 
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
-from txcloudfiles.errors import NotAuthenticatedException, RequestException
+from txcloudfiles.errors import NotAuthenticatedException, ResponseException
 from txcloudfiles.helpers import parse_int, parse_str
 from txcloudfiles.cfcontainer import Container, ContainerSet
 
@@ -42,6 +42,18 @@ class ListCDNContainersRequest(Request):
     METHOD = Request.GET
     REQUEST_TYPE = Request.REQUEST_CDN
     EXPECTED_BODY = Response.FORMAT_JSON
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class EnableCDNContainerRequest(Request):
+    '''
+        CDN-enable an existing storage container.
+    '''
+    METHOD = Request.PUT
+    REQUIRED_HEADERS = (
+        'X-TTL',
+        'X-Log-Retention',
+    )
+    REQUEST_TYPE = Request.REQUEST_CDN
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
@@ -65,12 +77,47 @@ def list_cdn_containers(session):
     request.run()
     return d
 
-def enable_cdn_container(session, container=None, ttl=0):
+def enable_cdn_container(session, container=None, ttl=0, logging=False):
     '''
         Enables public CDN access to a container and returns boolean a
         Container() object populated with some metadata on success.
     '''
-    pass
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    ttl = parse_int(ttl)
+    ttl = session.CDN_TTL_MIN if ttl < session.CDN_TTL_MIN else ttl
+    ttl = session.CDN_TTL_MAX if ttl > session.CDN_TTL_MAX else ttl
+    logging = 'True' if logging else 'False'
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            container = Container(
+                name=r.request._container.get_name(),
+                object_count=0,
+                bytes=0,
+                cdn=r.headers.get('X-Cdn-Enabled', False),
+                logging=r.headers.get('X-Log-Retention', False),
+                ttl=parse_int(r.headers.get('X-Ttl', 0)),
+                cdn_uri=r.headers.get('X-Cdn-Uri', ''),
+                ssl_uri=r.headers.get('X-Cdn-Ssl-Uri', ''),
+                stream_uri=r.headers.get('X-Cdn-Streaming-Uri', '')
+            )
+            d.callback((r, container))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to CDN-enable container, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to CDN-enable container, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to CDN-enable container'))
+    request = EnableCDNContainerRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_header(('X-TTL', ttl))
+    request.set_header(('X-Log-Retention', logging))
+    request.run()
+    return d
 
 def disable_cdn_container(session, container=None):
     '''

@@ -158,6 +158,7 @@ class Request(RequestBase):
             response_class = Response if status_code > 0 else ResponseError
             self._request_parser(response_class(
                 request=self,
+                transfer_id=factory.response_headers.get('X-Trans-Id', ''),
                 status_code=actual_code,
                 headers=factory.response_headers,
                 metadata=metadata,
@@ -213,8 +214,9 @@ class Response(ResponseBase):
     
     OK = True
     
-    def __init__(self, request=None, status_code=0, headers={}, metadata={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
+    def __init__(self, request=None, transfer_id='', status_code=0, headers={}, metadata={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
         self.request = request
+        self.transfer_id = transfer_id
         if status_code in self.HTTP_RESPONSE_CODES:
             self.status_code = status_code
         else:
