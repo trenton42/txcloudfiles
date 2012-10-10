@@ -172,10 +172,6 @@ def set_cdn_container_metadata(session, container=None, metadata={}):
         request.set_header(('X-TTL', ttl))
     if logging != None:
         request.set_header(('X-Log-Retention', logging))
-    if index_page != None:
-        request.set_header(('X-Container-Meta-Web-Index', index_page))
-    if error_page != None:
-        request.set_header(('X-Container-Meta-Web-Error', error_page))
     request.run()
     return d
 
@@ -238,27 +234,6 @@ def disable_cdn_container(session, container=None):
         'logging': None,
     }
     return set_cdn_container_metadata(session, container, metadata=metadata)
-
-def set_cdn_container_index(session, container=None, index_file=''):
-    '''
-        Instructs Cloud Files to use the suppled file name as an index file
-        for a CDN enabled container, wrapper for set_cdn_container_metadata().
-    '''
-    metadata = {
-        'index_file': index_file,
-    }
-    return set_cdn_container_metadata(session, container, metadata=metadata)
-
-def set_cdn_container_error(session, container=None, error_file=''):
-    '''
-        Instructs Cloud Files to use the suppled file name as an error file
-        for a CDN enabled container, wrapper for set_cdn_container_metadata().
-    '''
-    metadata = {
-        'error_file': error_file,
-    }
-    return set_cdn_container_metadata(session, container, metadata=metadata)
-
 
 def purge_cdn_object(session, obj=None, container=None, email_addresses=()):
     '''

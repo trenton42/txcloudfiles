@@ -245,6 +245,22 @@ def disable_container_logging(session, container=None):
     '''
     return set_container_metadata(session, container, {'X-Container-Meta-Access-Log-Delivery': False})
 
+def set_cdn_container_index(session, container=None, index_file=''):
+    '''
+        Instructs Cloud Files to use the suppled file name as an index file
+        for a CDN enabled container, wrapper for set_container_metadata().
+        Note this is actually a storage request and not a CDN request.
+    '''
+    return set_container_metadata(session, container, {'X-Container-Meta-Web-Index': index_file})
+
+def set_cdn_container_error(session, container=None, error_file=''):
+    '''
+        Instructs Cloud Files to use the suppled file name as an error file
+        for a CDN enabled container, wrapper for set_container_metadata().
+        Note this is actually a storage request and not a CDN request.
+    '''
+    return set_container_metadata(session, container, {'X-Container-Meta-Web-Error': error_file})
+
 '''
 
     EOF

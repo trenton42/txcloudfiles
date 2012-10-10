@@ -109,6 +109,8 @@ class Session(object):
     set_container_metadata = containers.set_container_metadata
     enable_container_logging = containers.enable_container_logging
     disable_container_logging = containers.disable_container_logging
+    set_cdn_container_index = containers.set_cdn_container_index
+    set_cdn_container_error = containers.set_cdn_container_error
     
     ''' object requests '''
     
@@ -128,8 +130,6 @@ class Session(object):
     get_cdn_container_metadata = cdn.get_cdn_container_metadata
     set_cdn_container_metadata = cdn.set_cdn_container_metadata
     purge_cdn_object = cdn.purge_cdn_object
-    set_cdn_container_index = cdn.set_cdn_container_index
-    set_cdn_container_error = cdn.set_cdn_container_error
 
 '''
 

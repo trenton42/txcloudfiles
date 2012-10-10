@@ -23,7 +23,7 @@
 
     Trivial example of how to update container meta data. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Update_CDN-Enabled_Container_Metadata-d1e2787.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Update_Container_Metadata-d1e1900.html
 
 '''
 
@@ -44,26 +44,17 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT, DataUsage
 def _got_session(session):
     print '> got session: %s' % session
     container_name = 'some_test_container'
-    def _ok((response, container)):
+    def _ok((response, v)):
         '''
             'response' is a transport.Response() instance.
-            'container' is a cfaccount.Container() instance.
+            'v' is boolean True.
         '''
         print '> got response: %s' % response
-        print '> updated CDN-enabled container metadata: %s' % container
-        print 'URL:', container.get_cdn_url()
-        print 'SSL URL:', container.get_ssl_url()
-        print 'streaming URL:', container.get_stream_url()
+        print '> set container index page: %s -> index.html' % container_name
         reactor.stop()
     print '> sending request'
     # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
-    # 'metadata' is a dictionary that accepts the following elements:
-    metadata = {
-        'cdn': False,                # enable / disable CDN serving of the container
-        'ttl': 900,                 # TTL of container, 900 seconds to 50 years
-        'logging': True,            # enable / disable logging on CDN enabled container
-    }
-    session.set_cdn_container_metadata(container=container_name, metadata=metadata).addCallback(_ok).addErrback(_error)
+    session.set_cdn_container_index(container=container_name, index_file='index.html').addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
