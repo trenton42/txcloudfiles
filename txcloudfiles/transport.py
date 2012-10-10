@@ -229,7 +229,7 @@ class Response(ResponseBase):
 
 class ResponseError(Response):
     '''
-        A Respone() which generated a serious (non-HTTP, such as a socket issue)
+        A Response() which generated a serious (non-HTTP, such as a socket issue)
         error.
     '''
     
