@@ -47,7 +47,7 @@ class ListObjectsRequest(Request):
 
 ''' response object wrappers '''
 
-def list_objects(session, container=None, prefix='', path='', delimiter=''):
+def list_objects(session, container=None, prefix=None, path=None, delimiter=None):
     '''
         Returns a Container() populated with objects on success.
     '''
@@ -55,9 +55,6 @@ def list_objects(session, container=None, prefix='', path='', delimiter=''):
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('first argument must be a Container() instance or a string')
-    prefix = parse_str(prefix)
-    path = parse_str(path)
-    delimiter = parse_str(delimiter)[:1]
     d = Deferred()
     def _parse(r):
         if r.OK:
@@ -66,25 +63,73 @@ def list_objects(session, container=None, prefix='', path='', delimiter=''):
             d.callback((r, container))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to get a list of objects, container does not exist'))
         else:
             d.errback(ResponseException('failed to get a list of objects'))
     request = ListObjectsRequest(session)
     request.set_parser(_parse)
     request.set_container(container)
-    request.set_query_string(('prefix', prefix))
-    request.set_query_string(('path', path))
-    request.set_query_string(('delimiter', delimiter))
+    if prefix != None:
+        request.set_query_string(('prefix', parse_str(prefix)))
+    if path != None:
+        request.set_query_string(('path', parse_str(path)))
+    if delimiter != None:
+        request.set_query_string(('delimiter', parse_str(delimiter)[:1]))
     request.run()
     return d
 
-def list_all_objects(session, container=None, limit=0, prefix='', path='', delimiter=''):
+def list_all_objects(session, container=None, limit=0, prefix=None, path=None, delimiter=None):
     '''
         A slower and more elaborate version of list_objects. Performs
         sucessive recursive requests on accounts with large numbers of 
         objects in a single container. Returns a single (and possibly very
         large) Container() object.
     '''
-    pass
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    limit = parse_int(limit)
+    limit = session.CONTAINER_LIMIT if limit > session.CONTAINER_LIMIT else limit
+    limit = session.CONTAINER_LIMIT if limit < 1 else limit
+    d = Deferred()
+    return_container = Container()
+    def _parse(r):
+        if r.OK:
+            return_container.add_objects(r.json)
+            if len(r.json) == limit:
+                request = ListObjectsRequest(session)
+                request.set_parser(_parse)
+                request.set_container(container)
+                request.set_query_string(('limit', limit))
+                request.set_query_string(('marker', return_container.get_last_object().get_name()))
+                if prefix != None:
+                    request.set_query_string(('prefix', prefix))
+                if path != None:
+                    request.set_query_string(('path', path))
+                if delimiter != None:
+                    request.set_query_string(('delimiter', delimiter))
+                request.run()
+            d.callback((r, return_container))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to get a list of objects, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to get a list of objects'))
+    request = ListObjectsRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_query_string(('limit', limit))
+    if prefix != None:
+        request.set_query_string(('prefix', parse_str(prefix)))
+    if path != None:
+        request.set_query_string(('path', parse_str(path)))
+    if delimiter != None:
+        request.set_query_string(('delimiter', parse_str(delimiter)[:1]))
+    request.run()
+    return d
 
 def get_object(session, obj=None):
     '''

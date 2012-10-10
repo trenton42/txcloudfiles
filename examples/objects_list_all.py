@@ -21,9 +21,11 @@
 
 '''
 
-    Trivial example of how to list all objects in a container. See:
+    Trivial example of how to all objects from a very large Cloud Files
+    container where it has more objects than can be returned in a single
+    request. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Serialized_List_Output-d1e1460.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/List_Large_Number_of_Objects-d1e1521.html
 
 '''
 
@@ -55,7 +57,7 @@ def _got_session(session):
             print obj, repr(obj)
         reactor.stop()
     print '> sending request'
-    session.list_objects(container_name).addCallback(_ok).addErrback(_error)
+    session.list_all_objects(container_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
