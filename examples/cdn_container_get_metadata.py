@@ -49,6 +49,8 @@ def _got_session(session):
             'response' is a transport.Response() instance.
             'container' is a cfaccount.Container() instance.
         '''
+        for k,v in response.headers.items():
+            print k,v
         print '> got response: %s' % response
         print '> got CDN-enabled container: %s' % container
         print 'URL:', container.get_cdn_url()

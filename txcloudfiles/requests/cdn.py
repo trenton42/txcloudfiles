@@ -58,7 +58,7 @@ class EnableCDNContainerRequest(Request):
 
 class CDNContainerMetadataRequest(Request):
     '''
-        Get account metadata request.
+        Get CDN-enabled container metadata request.
     '''
     METHOD = Request.HEAD
     REQUEST_TYPE = Request.REQUEST_CDN
@@ -67,6 +67,23 @@ class CDNContainerMetadataRequest(Request):
         'X-Cdn-Ssl-Uri',
         'X-Cdn-Streaming-Uri',
     )
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class UpdateCDNContainerMetadataRequest(Request):
+    '''
+        Set CDN-enabled container metadata request.
+    '''
+    METHOD = Request.POST
+    REQUEST_TYPE = Request.REQUEST_CDN
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class PurgeCDNObjectRequest(Request):
+    '''
+        Purge an live object from the CDN before the TTL expires. Limited to 25
+        requests per account per day.
+    '''
+    METHOD = Request.DELETE
+    REQUEST_TYPE = Request.REQUEST_CDN
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
@@ -90,19 +107,41 @@ def list_cdn_containers(session):
     request.run()
     return d
 
-def enable_cdn_container(session, container=None, ttl=0, logging=False):
+def set_cdn_container_metadata(session, container=None, metadata={}):
     '''
-        Enables public CDN access to a container and returns boolean a
-        Container() object populated with some metadata on success.
+        Sets metadat    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            containerset = ContainerSet()
+            containerset.add_containers(r.json)
+            d.callback((r, containerset))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get a list of CDN containers, not authorised'))
+        else:
+            d.errback(ResponseException('failed to get a list of CDN containers'))
+    request = ListCDNContainersRequest(session)
+    request.set_parser(_parse)
+    request.run()
+    return da on a CDN-enabled container and returns a Container()
+        object on success populated with metadata.
     '''
     if type(container) == str or type(container) == unicode:
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('first argument must be a Container() instance or a string')
-    ttl = parse_int(ttl)
-    ttl = session.CDN_TTL_MIN if ttl < session.CDN_TTL_MIN else ttl
-    ttl = session.CDN_TTL_MAX if ttl > session.CDN_TTL_MAX else ttl
-    logging = 'True' if logging else 'False'
+    cdn = metadata.get('cdn', None)
+    ttl = metadata.get('ttl', None)
+    logging = metadata.get('logging', None)
+    index_page = metadata.get('index_page', None)
+    error_page = metadata.get('error_page', None)
+    if cdn != None:
+        cdn = True if cdn else False
+    if ttl != None:
+        ttl = parse_int(ttl)
+        ttl = session.CDN_TTL_MIN if ttl < session.CDN_TTL_MIN else ttl
+        ttl = session.CDN_TTL_MAX if ttl > session.CDN_TTL_MAX else ttl
+    if logging != None:
+        logging = True if logging else False
     d = Deferred()
     def _parse(r):
         if r.OK:
@@ -119,25 +158,26 @@ def enable_cdn_container(session, container=None, ttl=0, logging=False):
             )
             d.callback((r, container))
         elif r.status_code == 401:
-            d.errback(NotAuthenticatedException('failed to CDN-enable container, not authorised'))
+            d.errback(NotAuthenticatedException('failed to set CDN-enabled container metadata, not authorised'))
         elif r.status_code == 404:
-            d.errback(NotAuthenticatedException('failed to CDN-enable container, container does not exist'))
+            d.errback(NotAuthenticatedException('failed to set CDN-enabled container metadata, container does not exist'))
         else:
-            d.errback(ResponseException('failed to CDN-enable container'))
-    request = EnableCDNContainerRequest(session)
+            d.errback(ResponseException('failed to set CDN-enabled container metadata'))
+    request = UpdateCDNContainerMetadataRequest(session)
     request.set_parser(_parse)
     request.set_container(container)
-    request.set_header(('X-TTL', ttl))
-    request.set_header(('X-Log-Retention', logging))
+    if cdn != None:
+        request.set_header(('X-CDN-Enabled', cdn))
+    if ttl != None:
+        request.set_header(('X-TTL', ttl))
+    if logging != None:
+        request.set_header(('X-Log-Retention', logging))
+    if index_page != None:
+        request.set_header(('X-Container-Meta-Web-Index', index_page))
+    if error_page != None:
+        request.set_header(('X-Container-Meta-Web-Error', error_page))
     request.run()
     return d
-
-def disable_cdn_container(session, container=None):
-    '''
-        Disables public CDN access to a container and returns boolean True
-        on success.
-    '''
-    pass
 
 def get_cdn_container_metadata(session, container=None):
     '''
@@ -174,12 +214,51 @@ def get_cdn_container_metadata(session, container=None):
     request.run()
     return d
 
-def set_cdn_container_metadata(session, container=None, metadata={}):
+def enable_cdn_container(session, container=None, ttl=None, logging=None):
     '''
-        Sets custom arbitrary metadata on a CDN enabled container and
-        returns boolean True on success.
+        Enables public CDN access to a container, wrapper for
+        set_cdn_container_metadata().
     '''
-    pass
+    metadata = {
+        'cdn': True,
+        'ttl': ttl,
+        'logging': logging,
+    }
+    return set_cdn_container_metadata(session, container, metadata=metadata)
+
+
+def disable_cdn_container(session, container=None):
+    '''
+        Disables public CDN access to a container, wrapper for
+        set_cdn_container_metadata().
+    '''
+    metadata = {
+        'cdn': False,
+        'ttl': 0,
+        'logging': None,
+    }
+    return set_cdn_container_metadata(session, container, metadata=metadata)
+
+def set_cdn_container_index(session, container=None, index_file=''):
+    '''
+        Instructs Cloud Files to use the suppled file name as an index file
+        for a CDN enabled container, wrapper for set_cdn_container_metadata().
+    '''
+    metadata = {
+        'index_file': index_file,
+    }
+    return set_cdn_container_metadata(session, container, metadata=metadata)
+
+def set_cdn_container_error(session, container=None, error_file=''):
+    '''
+        Instructs Cloud Files to use the suppled file name as an error file
+        for a CDN enabled container, wrapper for set_cdn_container_metadata().
+    '''
+    metadata = {
+        'error_file': error_file,
+    }
+    return set_cdn_container_metadata(session, container, metadata=metadata)
+
 
 def purge_cdn_object(session, obj=None, container=None, email_addresses=()):
     '''
@@ -187,22 +266,22 @@ def purge_cdn_object(session, obj=None, container=None, email_addresses=()):
         Limited to 25 requests per day. Optional email addresses recieve a
         confirmation of the purge if set.
     '''
-    pass
-
-def set_cdn_container_index(session, container=None, index_file=''):
-    '''
-        Instructs Cloud Files to use the suppled file name as an index file
-        for a CDN enabled container. Returns boolean True on success. 
-    '''
-    pass
-
-def set_cdn_container_error(session, container=None, error_file=''):
-    '''
-        Instructs Cloud Files to use the suppled file name as an error file
-        for a CDN enabled container for 401 and 404 errors. Returns boolean
-        True on success. 
-    '''
-    pass
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to purge object from CDN, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to purge object from CDN, object or container does not exist'))
+        else:
+            d.errback(ResponseException('failed to purge object from CDN'))
+    request = PurgeCDNObjectRequest(session)
+    request.set_parser(_parse)
+    if len(email_addresses) > 0:
+        request.set_header(('X-Purge-Email', ', '.join(email_addresses)))
+    request.run()
+    return d
 
 '''
 

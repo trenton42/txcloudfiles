@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to request container meta data. See:
+    Trivial example of how to update container meta data. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/CDN-Enable_a_Container-d1e2665.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Update_CDN-Enabled_Container_Metadata-d1e2787.html
 
 '''
 
@@ -50,13 +50,22 @@ def _got_session(session):
             'container' is a cfaccount.Container() instance.
         '''
         print '> got response: %s' % response
-        print '> CDN access to container disabled: %s' % container
+        print '> updated CDN-enabled container metadata: %s' % container
+        print 'URL:', container.get_cdn_url()
+        print 'SSL URL:', container.get_ssl_url()
+        print 'streaming URL:', container.get_stream_url()
         reactor.stop()
     print '> sending request'
     # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
-    # this disables CDN access to a container the same as setting metadata['cdn'] = False
-    # this does not disable logging.
-    session.disable_cdn_container(container=container_name).addCallback(_ok).addErrback(_error)
+    # 'metadata' is a dictionary that accepts the following elements:
+    metadata = {
+        'cdn': False,                # enable / disable CDN serving of the container
+        'ttl': 900,                 # TTL of container, 900 seconds to 50 years
+        'logging': True,            # enable / disable logging on CDN enabled container
+        'index_page': 'index.html', # static object to use as the index page
+        'error_page': 'error.html', # static object to use as the error page
+    }
+    session.set_cdn_container_metadata(container=container_name, metadata=metadata).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
