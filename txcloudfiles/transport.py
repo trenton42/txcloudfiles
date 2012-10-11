@@ -33,8 +33,12 @@ from twisted.internet.defer import Deferred
 from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
 from txcloudfiles import __version__
+from txcloudfiles.stream import DownstreamTransportProtocol
 from txcloudfiles.validation import RequestBase, ResponseBase
 from txcloudfiles.helpers import parse_int, parse_str, Metadata
+
+from twisted.web.client import Agent
+from twisted.web.http_headers import Headers
 
 # try and import the verifying SSL context from txverifyssl
 try:
@@ -65,8 +69,9 @@ class Request(RequestBase):
     TIMEOUT = 15
     REDIRECT_LIMIT = 0
     
-    def __init__(self, session):
+    def __init__(self, session, streamclient=None):
         self._session = session
+        self._streamclient = streamclient
         self._request_headers = {}
         self._request_post = {}
         self._request_parser = None
@@ -117,12 +122,12 @@ class Request(RequestBase):
         return binary_data, json_data
     
     def _parse_headers(self, headers):
-        if type(headers) != dict:
-            return {}
-        for k,v in headers.items():
-            headers[k.title()] = v[0] if type(v) == list else v
-            del headers[k]
-        return headers, Metadata().loads(headers)
+        r = {}
+        if type(headers) != list:
+            return r
+        for (k,v) in headers:
+            r[k.title()] = v[0] if type(v) == list else v
+        return r, Metadata().loads(r)
     
     def _verify_response(self, status_code, headers, binary_data, json_data):
         status_code = parse_int(status_code)
@@ -146,21 +151,34 @@ class Request(RequestBase):
             returns an HTTPClientFactory instance.
         '''
         
-        def _got_data(data, factory):
+        def _got_response(response):
+            '''
+                Got a response, if we're expecting a body then wait for the
+                protocol to return, otherwise fire the callback immediately.
+            '''
+            if self._get_expected_body():
+                d = Deferred()
+                d.addCallback(_got_data, response).addErrback(_got_data, response)
+                response.deliverBody(DownstreamTransportProtocol(d, self._streamclient))
+                return d
+            else:
+                _got_data('', response)
+                
+        def _got_data(data, response):
             '''
                 Check the response for failure. Note twisted raises a 'Failure'
                 for things like HTTP 204's with no content, despite this being
                 normal behaviour for the API.
             '''
             binary_data, json_data = self._parse_response_data(data)
-            headers, metadata = self._parse_headers(factory.response_headers)
-            actual_code, status_code = self._verify_response(factory.status, headers, binary_data, json_data)
+            headers, metadata = self._parse_headers(list(response.headers.getAllRawHeaders()))
+            actual_code, status_code = self._verify_response(response.code, headers, binary_data, json_data)
             response_class = Response if status_code > 0 else ResponseError
             self._request_parser(response_class(
                 request=self,
-                transfer_id=factory.response_headers.get('X-Trans-Id', ''),
+                transfer_id=headers.get('X-Trans-Id', ''),
                 status_code=actual_code,
-                headers=factory.response_headers,
+                headers=headers,
                 metadata=metadata,
                 binary_body=binary_data,
                 json_body=json_data,
@@ -170,32 +188,18 @@ class Request(RequestBase):
         request_type = self._get_request_type()
         if request_type == Request.REQUEST_STORAGE or request_type == Request.REQUEST_CDN:
             self.set_header(('X-Auth-Token', self._session.get_key()))
+        request_headers = self._get_request_headers()
+        request_headers['User-Agent'] = [USER_AGENT]
         url = self._get_request_url()
-        factory = HTTPClientFactory(
+        agent = Agent(reactor, SSLContextFactory(url))
+        d = agent.request(
+            self._get_request_method(),
             url,
-            method=self._get_request_method(),
-            postdata=self._construct_post_data(),
-            headers=self._get_request_headers(),
-            agent=USER_AGENT,
-            timeout=self.TIMEOUT,
-            cookies=None,
-            followRedirect=(1 if self.REDIRECT_LIMIT > 0 else 0),
-            redirectLimit=self.REDIRECT_LIMIT
+            Headers(request_headers),
+            None
         )
-        parts = urlsplit(url)
-        custom_port = parts.netloc.find(':')
-        port = 0
-        if custom_port > 0:
-            port = parts.netloc[custom_port+1:]
-            port = parse_int(port)
-        if port == 0:
-            port = 443 if parts.scheme == 'https' else 80
-        if parts.scheme == 'https':
-            reactor.connectSSL(parts.netloc, port, factory, SSLContextFactory(url))
-        else:
-            reactor.connectTCP(parts.netloc, port, factory)
-        factory.deferred.addCallback(_got_data, factory)
-        factory.deferred.addErrback(_got_data, factory)
+        d.addCallback(_got_response)
+        d.addErrback(_got_response)
     
     def run(self):
         '''
@@ -214,7 +218,7 @@ class Response(ResponseBase):
     
     OK = True
     
-    def __init__(self, request=None, transfer_id='', status_code=0, headers={}, metadata={}, binary_body='', json_body={}, body_type=Request.FORMAT_JSON):
+    def __init__(self, request=None, transfer_id='', status_code=0, headers={}, metadata={}, binary_body='', json_body={}, body_type=None):
         self.request = request
         self.transfer_id = transfer_id
         if status_code in self.HTTP_RESPONSE_CODES:

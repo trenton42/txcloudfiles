@@ -17,7 +17,6 @@ attempt to use earlier versions of Python or Twisted (given txcloudfiles uses
 the standard json module it will certainly fail with Python < 2.6).
 
 Todo:
- * complete CDN requests
  * complete object requests
  * switch to using client.Agent for requests
  * add custom producer

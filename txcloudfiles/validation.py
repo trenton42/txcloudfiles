@@ -253,7 +253,10 @@ class GetValidationMixin(object):
         raise OperationConfigException('operataion constant EXPECTED_RESPONSE_CODE valid integer or tuple of integers')
     
     def _get_request_headers(self):
-        return self._request_headers
+        r = {}
+        for k,v in self._request_headers.items():
+            r[k] = [v]
+        return r
     
     def _get_request_post(self):
         return self._request_post

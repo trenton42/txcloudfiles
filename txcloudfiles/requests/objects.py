@@ -131,37 +131,72 @@ def list_all_objects(session, container=None, limit=0, prefix=None, path=None, d
     request.run()
     return d
 
-def get_object(session, obj=None):
+def get_object(session, container=None, obj=None):
     '''
         Retrieves the object, returns a blob of the object data on success.
     '''
-    pass
+    if type(obj) == str or type(obj) == unicode:
+        obj = Object(name=obj)
+    if not isinstance(obj, Object):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def create_object(session, name='', container=None, delete_at=None, delete_after=None, metadata={}):
+def create_object(session, container=None, obj=None, delete_at=None, delete_after=None, metadata={}):
     '''
         Create or replace an object into a container and returns boolean
         True on success.
     '''
-    pass
+    if type(obj) == str or type(obj) == unicode:
+        obj = Object(name=obj)
+    if not isinstance(obj, Object):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def delete_object(session, obj=None, container=None):
+def delete_object(session, container=None, obj=None):
     '''
         Deletes an object and returns boolean True on success.
     '''
-    pass
+    if type(obj) == str or type(obj) == unicode:
+        obj = Object(name=obj)
+    if not isinstance(obj, Object):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def get_object_metadata(session, obj=None, container=None):
+def get_object_metadata(session, container=None, obj=None):
     '''
         Returns a Container object on success populated with metadata.
     '''
-    pass
+    if type(obj) == str or type(obj) == unicode:
+        obj = Object(name=obj)
+    if not isinstance(obj, Object):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def set_object_metadata(session, obj=None, container=None, metadata={}):
+def set_object_metadata(sessio, container=None, obj=None, metadata={}):
     '''
         Sets custom arbitrary metadata on a container and returns boolean
         True on success.
     '''
-    pass
+    if type(obj) == str or type(obj) == unicode:
+        obj = Object(name=obj)
+    if not isinstance(obj, Object):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
+    if type(container) == str or type(container) == unicode:
+        container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('second argument must be a Object() instance or a string')
 
 '''
 
