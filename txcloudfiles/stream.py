@@ -45,7 +45,7 @@ class DownstreamTransportProtocol(Protocol):
     
     def connectionLost(self, reason):
         if self.streamclient:
-            passtransport
+            pass
         else:
             self.d.callback(self.buffer)
 

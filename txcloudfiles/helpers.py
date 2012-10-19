@@ -44,21 +44,25 @@ def parse_url_str(x):
 
 class Metadata(object):
     
-    PREFIX = 'X-Container-Meta-'
+    CONTAINER = 'X-Container-Meta-'
+    OBJECT = 'X-Object-Meta-'
+    
+    def __init__(self, prefix=None):
+        self.prefix = self.OBJECT if prefix == self.OBJECT else self.CONTAINER
     
     def is_metadata_header(self, header):
-        return header.title()[:len(self.PREFIX)] == self.PREFIX
+        return header.title()[:len(self.prefix)] == self.prefix
     
     def prefix_header(self, header):
         header = header.title()
         if not self.is_metadata_header(header):
-            return self.PREFIX + header
+            return self.prefix + header
         return header
     
     def parse_header(self, header):
         header = header.title()
         if self.is_metadata_header(header):
-            return header[len(self.PREFIX):].lower()
+            return header[len(self.prefix):].lower()
         return header
     
     def loads(self, headers):

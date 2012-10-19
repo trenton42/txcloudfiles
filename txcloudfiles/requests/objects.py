@@ -24,6 +24,8 @@
 
 '''
 
+from time import mktime
+from datetime import datetime
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
 from txcloudfiles.errors import NotAuthenticatedException, ResponseException
@@ -43,6 +45,25 @@ class ListObjectsRequest(Request):
     METHOD = Request.GET
     REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_BODY = Response.FORMAT_JSON
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class CreateObjectRequest(Request):
+    '''
+        Create an object.
+    '''
+    METHOD = Request.PUT
+    REQUIRED_HEADERS = (
+        'Content-Length',
+    )
+    REQUIRED_BODY = True
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class UpdateObjectMetadataRequest(Request):
+    '''
+        Update object metadata.
+    '''
+    METHOD = Request.POST
+    REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 ''' response object wrappers '''
@@ -144,7 +165,7 @@ def get_object(session, container=None, obj=None):
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def create_object(session, container=None, obj=None, delete_at=None, delete_after=None, metadata={}):
+def create_object(session, container=None, obj=None, delete_at=None, metadata={}):
     '''
         Create or replace an object into a container and returns boolean
         True on success.
@@ -157,6 +178,29 @@ def create_object(session, container=None, obj=None, delete_at=None, delete_afte
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
+    _delete_at = 0
+    if type(delete_at) == datetime:
+        _delete_at = mktime(delete_at.timetuple())
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            container = Container()
+            container.add_objects(r.json)
+            d.callback((r, container))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to get a list of objects, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to get a list of objects'))
+    request = CreateObjectRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_object(obj)
+    for k,v in metadata.items():
+        request.set_metadata((k, v), Metadata.OBJECT)
+    request.run()
+    return d
 
 def delete_object(session, container=None, obj=None):
     '''
@@ -197,6 +241,7 @@ def set_object_metadata(sessio, container=None, obj=None, metadata={}):
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
+    
 
 '''
 

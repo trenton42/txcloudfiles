@@ -228,6 +228,9 @@ class GetValidationMixin(object):
             raise OperationConfigException('operataion constant REQUIRED_POST must be a boolean')
         return required_post
     
+    def _get_required_body(self):
+        return True if getattr(self, 'REQUIRED_BODY', False) else False
+    
     def _get_expected_headers(self):
         expected_headers = getattr(self, 'EXPECTED_HEADERS', '')
         if type(expected_headers) != tuple:
@@ -274,12 +277,12 @@ class SetValidationMixin(object):
             raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
         self._request_headers[header[0]] = header[1]
     
-    def set_metadata(self, metadata=()):
+    def set_metadata(self, metadata=(), prefix=None):
         if type(metadata) != tuple:
             raise OperationConfigException('set_metadata() must be called with a tuple as the only argument')
         if len(metadata) != 2:
             raise OperationConfigException('set_metadata() headers must be a tuple with exactly two values')
-        self._request_headers[Metadata().prefix_header(metadata[0])] = metadata[1]
+        self._request_headers[Metadata(prefix=prefix).prefix_header(metadata[0])] = metadata[1]
     
     def set_query_string(self, querystring=()):
         if type(querystring) != tuple:
@@ -288,6 +291,11 @@ class SetValidationMixin(object):
             raise OperationConfigException('set_header() headers must be a tuple with exactly two values')
         if querystring[1]:
             self._query_string[querystring[0]] = querystring[1]
+    
+    def set_body(self, body):
+        if type(body) != str:
+            raise OperationConfigException('set_body() must be called with a str as the only argument')
+        self._body = body
     
     def set_container(self, container):
         if not isinstance(container, Container):
@@ -329,6 +337,9 @@ class RequestValidationMixin(object):
         # check post data is set for POST requests
         if self._get_required_post() and len(self._request_post) == 0:
             raise CreateRequestException('required post data is missing for request')
+        # check if a required body is set
+        if self._get_required_body() and not self._body:
+            raise CreateRequestException('required body is missing for request')
 
 class RequestBase(GetValidationMixin, SetValidationMixin, RequestValidationMixin, DataFormatMixin, HTTPMethodMixin):
     '''

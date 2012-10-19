@@ -60,6 +60,7 @@ class Request(RequestBase):
     METHOD = False
     REQUIRED_HEADERS = ()
     REQUIRED_POST = False
+    REQUIRED_BODY = False
     EXPECTED_HEADERS = ()
     EXPECTED_BODY = False
     EXPECTED_RESPONSE_CODE = False
@@ -77,6 +78,7 @@ class Request(RequestBase):
         self._request_parser = None
         self._waiting = False
         self._query_string = {}
+        self._body = None
         self._container = None
         self._object = None
     

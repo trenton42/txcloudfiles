@@ -27,7 +27,7 @@
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
 from txcloudfiles.errors import NotAuthenticatedException, ResponseException
-from txcloudfiles.helpers import parse_int, parse_str
+from txcloudfiles.helpers import parse_int, parse_str, Metadata
 from txcloudfiles.cfcontainer import Container, ContainerSet
 
 ''' requests '''
@@ -148,7 +148,7 @@ def create_container(session, name='', metadata={}):
     request.set_parser(_parse)
     request.set_container(container)
     for k,v in metadata.items():
-        request.set_metadata((k, v))
+        request.set_metadata((k, v), Metadata.CONTAINER)
     request.run()
     return d
 
@@ -227,7 +227,7 @@ def set_container_metadata(session, container=None, metadata={}):
     request.set_parser(_parse)
     request.set_container(container)
     for k,v in metadata.items():
-        request.set_metadata((k, v))
+        request.set_metadata((k, v), Metadata.CONTAINER)
     request.run()
     return d
 
