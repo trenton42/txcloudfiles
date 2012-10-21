@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to list all objects in a container. See:
+    Trivial example of how to create an object without streaming. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Serialized_List_Output-d1e1460.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Create_Update_Object-d1e1965.html
 
 '''
 
