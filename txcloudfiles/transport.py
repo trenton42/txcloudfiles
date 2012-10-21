@@ -33,7 +33,7 @@ from twisted.internet.defer import Deferred
 from twisted.web.client import HTTPClientFactory
 from twisted.python.failure import Failure
 from txcloudfiles import __version__
-from txcloudfiles.stream import DownstreamTransportProtocol
+from txcloudfiles.stream import DownstreamTransportProtocol, BlockProducer, StreamProducer
 from txcloudfiles.validation import RequestBase, ResponseBase
 from txcloudfiles.helpers import parse_int, parse_str, Metadata
 
@@ -79,11 +79,15 @@ class Request(RequestBase):
         self._waiting = False
         self._query_string = {}
         self._body = None
+        self._stream = None
         self._container = None
         self._object = None
     
     def _get_request_url(self):
         request_type = self._get_request_type()
+        #print type(self._session)
+        #print self._session
+        #print dir(self._session)
         if request_type == Request.REQUEST_AUTH:
             return self._session.get_endpoint().get_auth_url()
         elif request_type == Request.REQUEST_CDN:
@@ -193,12 +197,15 @@ class Request(RequestBase):
         request_headers = self._get_request_headers()
         request_headers['User-Agent'] = [USER_AGENT]
         url = self._get_request_url()
+        producer = None
+        if self._get_required_body() and self._object:
+            producer = StreamProducer(self._stream) if self._object.is_stream() else BlockProducer(self._body)
         agent = Agent(reactor, SSLContextFactory(url))
         d = agent.request(
             self._get_request_method(),
             url,
             Headers(request_headers),
-            None
+            producer
         )
         d.addCallback(_got_response)
         d.addErrback(_got_response)

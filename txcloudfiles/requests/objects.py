@@ -32,6 +32,7 @@ from txcloudfiles.errors import NotAuthenticatedException, ResponseException
 from txcloudfiles.helpers import parse_int, parse_str
 from txcloudfiles.cfaccount import Account
 from txcloudfiles.cfcontainer import Container, ContainerSet
+from txcloudfiles.cfobject import Object
 
 ''' requests '''
 
@@ -56,6 +57,7 @@ class CreateObjectRequest(Request):
         'Content-Length',
     )
     REQUIRED_BODY = True
+    REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
 class UpdateObjectMetadataRequest(Request):
@@ -170,35 +172,36 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
         Create or replace an object into a container and returns boolean
         True on success.
     '''
-    if type(obj) == str or type(obj) == unicode:
-        obj = Object(name=obj)
     if not isinstance(obj, Object):
-        raise CreateRequestException('first argument must be a Container() instance or a string')
+        raise CreateRequestException('second argument must be a Object() instance')
     if type(container) == str or type(container) == unicode:
         container = Container(name=container)
     if not isinstance(container, Container):
-        raise CreateRequestException('second argument must be a Object() instance or a string')
+        raise CreateRequestException('first argument must be a Container() instance or a string')
     _delete_at = 0
     if type(delete_at) == datetime:
         _delete_at = mktime(delete_at.timetuple())
     d = Deferred()
     def _parse(r):
         if r.OK:
-            container = Container()
-            container.add_objects(r.json)
-            d.callback((r, container))
+            if r.headers['Etag'] != obj.get_hash():
+                d.errback(ResponseException('failed to PUT data, upload hash mismatch (%s != %s)' % (r.headers['Etag'], obj.get_hash())))
+            d.callback((r, obj))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
         elif r.status_code == 404:
-            d.errback(NotAuthenticatedException('failed to get a list of objects, container does not exist'))
+            d.errback(ResponseException('failed to get a list of objects, container does not exist'))
         else:
             d.errback(ResponseException('failed to get a list of objects'))
     request = CreateObjectRequest(session)
     request.set_parser(_parse)
     request.set_container(container)
     request.set_object(obj)
+    request.set_header(('Content-Length', obj.get_length()))
+    request.set_header(('Etag', obj.get_hash()))
     for k,v in metadata.items():
         request.set_metadata((k, v), Metadata.OBJECT)
+    request.set_stream(obj.get_stream()) if obj.is_stream() else request.set_body(obj.get_data())
     request.run()
     return d
 

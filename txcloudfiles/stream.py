@@ -25,6 +25,9 @@
 
 '''
 
+from zope.interface import implements
+from twisted.internet.defer import succeed
+from twisted.web.iweb import IBodyProducer
 from twisted.internet.protocol import Protocol
 
 class DownstreamTransportProtocol(Protocol):
@@ -46,8 +49,34 @@ class DownstreamTransportProtocol(Protocol):
     def connectionLost(self, reason):
         if self.streamclient:
             pass
-        else:
+        else: 
             self.d.callback(self.buffer)
+
+class BlockProducer(object):
+    '''
+        Produces a single block of non-streamable data in one request.
+    '''
+    
+    implements(IBodyProducer)
+    
+    def __init__(self, data):
+        self.data = data
+        self.length = len(self.data)
+    
+    def startProducing(self, consumer):
+        consumer.write(self.data)
+        return succeed(None)
+    
+    def pauseProducing(self):
+        pass
+    
+    def stopProducing(self):
+        pass
+
+class StreamProducer(object):
+    '''
+        Produces chunks of data from a source upstream on request.
+    '''
 
 '''
 

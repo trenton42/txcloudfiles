@@ -316,6 +316,9 @@ class SetValidationMixin(object):
         if not hasattr(callback, '__call__'):
             raise OperationConfigException('set_parser() must be called with a callback function as the only argument')
         self._request_parser = callback
+    
+    def set_stream(self, stream):
+        self._stream = stream
 
 class RequestValidationMixin(object):
     '''
