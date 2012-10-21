@@ -39,7 +39,7 @@ except ImportError:
         sys.path.insert(0, txcfpath)
 
 from twisted.internet import reactor
-from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT, DataUsage
+from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session(session):
     print '> got session: %s' % session

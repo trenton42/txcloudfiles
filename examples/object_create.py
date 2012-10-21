@@ -56,6 +56,10 @@ def _got_session(session):
         print '> got object populated with response data: %s' % obj
         reactor.stop()
     print '> sending request'
+    # create_object() also takes an optional 'delete_at' kwarg which if set to a
+    # datetime.datetime instance in the future will reques the object be deleted
+    # from the rackspace cloudfiles servers at that time, use timedelta's to
+    # specify rolling timers (e.g. delete this 24hr's from now).
     session.create_object(container_name, object_instance).addCallback(_ok).addErrback(_error)
 
 def _error(e):
