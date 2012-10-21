@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 from auth import Endpoint, Auth, get_auth
-from helpers import DataUsage
+from helpers import DataUsage, Metadata
 
 UK_ENDPOINT = Endpoint.UK
 US_ENDPOINT = Endpoint.US

@@ -199,7 +199,8 @@ class GetValidationMixin(object):
             static_qs_str = '&'.join(('%s=%s' % (k,v) for k,v in static_qs.items()))
         else:
             static_qs_str = ''
-        return '&'.join(('%s=%s' % (k,v) for k,v in self._query_string.items())) + '&' + static_qs_str
+        qs = '&'.join(('%s=%s' % (k,v) for k,v in self._query_string.items())) + '&' + static_qs_str
+        return '' if qs == '&' else qs
     
     def _get_request_method(self):
         method = getattr(self, 'METHOD', '')

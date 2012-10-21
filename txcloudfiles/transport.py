@@ -85,9 +85,6 @@ class Request(RequestBase):
     
     def _get_request_url(self):
         request_type = self._get_request_type()
-        #print type(self._session)
-        #print self._session
-        #print dir(self._session)
         if request_type == Request.REQUEST_AUTH:
             return self._session.get_endpoint().get_auth_url()
         elif request_type == Request.REQUEST_CDN:
@@ -133,7 +130,8 @@ class Request(RequestBase):
             return r
         for (k,v) in headers:
             r[k.title()] = v[0] if type(v) == list else v
-        return r, Metadata().loads(r)
+        metadata_type = Metadata.OBJECT if self._object else Metadata.CONTAINER
+        return r, Metadata(metadata_type).loads(r)
     
     def _verify_response(self, status_code, headers, binary_data, json_data):
         status_code = parse_int(status_code)

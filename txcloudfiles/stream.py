@@ -77,6 +77,28 @@ class StreamProducer(object):
     '''
         Produces chunks of data from a source upstream on request.
     '''
+    
+    implements(IBodyProducer)
+    
+    disconnecting = False
+    
+    def __init__(self, producer):
+        self._producer = producer
+    
+    def _stopProxying(self):
+        self._producer = None
+    
+    def stopProducing(self):
+        if self._producer is not None:
+            self._producer.stopProducing()
+    
+    def resumeProducing(self):
+        if self._producer is not None:
+            self._producer.resumeProducing()
+    
+    def pauseProducing(self):
+        if self._producer is not None:
+            self._producer.pauseProducing()
 
 '''
 

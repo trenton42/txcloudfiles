@@ -29,7 +29,7 @@ from datetime import datetime
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
 from txcloudfiles.errors import NotAuthenticatedException, ResponseException
-from txcloudfiles.helpers import parse_int, parse_str
+from txcloudfiles.helpers import parse_int, parse_str, Metadata
 from txcloudfiles.cfaccount import Account
 from txcloudfiles.cfcontainer import Container, ContainerSet
 from txcloudfiles.cfobject import Object
@@ -57,6 +57,14 @@ class CreateObjectRequest(Request):
         'Content-Length',
     )
     REQUIRED_BODY = True
+    REQUEST_TYPE = Request.REQUEST_STORAGE
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
+class ObjectMetadataRequest(Request):
+    '''
+        Get object metadata.
+    '''
+    METHOD = Request.HEAD
     REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
@@ -169,8 +177,8 @@ def get_object(session, container=None, obj=None):
 
 def create_object(session, container=None, obj=None, delete_at=None, metadata={}):
     '''
-        Create or replace an object into a container and returns boolean
-        True on success.
+        Create or replace an object into a container and returns a cfobject.Object()
+        instance on success.
     '''
     if not isinstance(obj, Object):
         raise CreateRequestException('second argument must be a Object() instance')
@@ -220,7 +228,7 @@ def delete_object(session, container=None, obj=None):
 
 def get_object_metadata(session, container=None, obj=None):
     '''
-        Returns a Container object on success populated with metadata.
+        Returns an Object object on success populated with metadata.
     '''
     if type(obj) == str or type(obj) == unicode:
         obj = Object(name=obj)
@@ -230,10 +238,28 @@ def get_object_metadata(session, container=None, obj=None):
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            object_name = r.request._object.get_name()
+            obj = Object(name=object_name, metadata=r.metadata)
+            d.callback((r, obj))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to set container metadata, not authorised'))
+        elif r.status_code == 404:
+            d.errback(NotAuthenticatedException('failed to set container metadata, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to set container metadata'))
+    request = ObjectMetadataRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_object(obj)
+    request.run()
+    return d
 
-def set_object_metadata(sessio, container=None, obj=None, metadata={}):
+def set_object_metadata(session, container=None, obj=None, metadata={}):
     '''
-        Sets custom arbitrary metadata on a container and returns boolean
+        Sets custom arbitrary metadata on an object and returns boolean
         True on success.
     '''
     if type(obj) == str or type(obj) == unicode:
@@ -244,7 +270,24 @@ def set_object_metadata(sessio, container=None, obj=None, metadata={}):
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
-    
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to set object metadata, not authorised'))
+        elif r.status_code == 404:
+            d.errback(ResponseException('failed to set object metadata, container does not exist'))
+        else:
+            d.errback(ResponseException('failed to set object metadata'))
+    request = UpdateObjectMetadataRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_object(obj)
+    for k,v in metadata.items():
+        request.set_metadata((k, v), Metadata.OBJECT)
+    request.run()
+    return d
 
 '''
 

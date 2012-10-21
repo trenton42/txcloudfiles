@@ -195,7 +195,7 @@ def get_container_metadata(session, container=None):
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get container metadata, not authorised'))
         elif r.status_code == 404:
-            d.errback(NotAuthenticatedException('failed to get container metadata, container does not exist'))
+            d.errback(ResponseException('failed to get container metadata, container does not exist'))
         else:
             d.errback(ResponseException('failed to get container metadata'))
     request = ContainerMetadataRequest(session)
@@ -220,7 +220,7 @@ def set_container_metadata(session, container=None, metadata={}):
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to set container metadata, not authorised'))
         elif r.status_code == 404:
-            d.errback(NotAuthenticatedException('failed to set container metadata, container does not exist'))
+            d.errback(ResponseException('failed to set container metadata, container does not exist'))
         else:
             d.errback(ResponseException('failed to set container metadata'))
     request = UpdateContainerMetadataRequest(session)

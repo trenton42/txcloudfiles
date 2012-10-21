@@ -33,12 +33,13 @@ class Object(object):
         A representation of a Cloud Files storage object.
     '''
     
-    def __init__(self, name='', file_hash='', bytes=0, content_type='', last_modified=''):
+    def __init__(self, name='', file_hash='', bytes=0, content_type='', last_modified='', metadata={}):
         self._name = name
         self._hash = file_hash
         self._data = DataUsage(bytes)
         self._content_type = content_type
         self._last_modified = last_modified
+        self._metadata = metadata
         self._data = None
         self._stream = None
         self._hash = None
@@ -67,6 +68,9 @@ class Object(object):
     
     def get_data(self):
         return self._data
+    
+    def get_metadata(self):
+        return self._metadata
     
     def set_stream(self, stream, streamlen=0, streamhash=None):
         self._stream = stream
