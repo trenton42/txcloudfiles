@@ -46,7 +46,9 @@ class Object(object):
         self._data = ''
         self._stream = None
         self._hash = ''
+        self._remote_hash = ''
         self._len = 0
+        self._remote_len = 0
     
     def __repr__(self):
         d = (self.__class__.__name__, self._name, int(self._bytes.b), hex(id(self)))
@@ -63,6 +65,12 @@ class Object(object):
     
     def set_hash(self, file_hash):
         self._hash = str(file_hash)
+    
+    def set_remote_hash(self, remote_hash):
+        self._remote_hash = str(remote_hash)
+    
+    def set_remote_lenth(self, remote_length):
+        self._remote_len = int(remote_length)
     
     def set_bytes(self, bytes):
         self._bytes = DataUsage(bytes)
@@ -119,6 +127,9 @@ class Object(object):
     
     def get_length(self):
         return self._len
+    
+    def get_content_type(self):
+        return self._content_type
     
     def is_stream(self):
         return True if self._stream else False

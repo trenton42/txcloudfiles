@@ -74,7 +74,7 @@ class HTTPMethodMixin(object):
     METHOD_POST = 'POST'
     METHOD_DELETE = 'DELETE'
     METHOD_HEAD = 'HEAD'
-    METHOD_COPT = 'COPY'
+    METHOD_COPY = 'COPY'
     METHODS = (
         METHOD_GET,
         METHOD_PUT,

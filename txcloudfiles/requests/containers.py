@@ -26,7 +26,7 @@
 
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
-from txcloudfiles.errors import NotAuthenticatedException, ResponseException
+from txcloudfiles.errors import NotAuthenticatedException, ResponseException, CreateRequestException
 from txcloudfiles.helpers import parse_int, parse_str, Metadata
 from txcloudfiles.cfcontainer import Container, ContainerSet
 

@@ -116,11 +116,13 @@ class Session(object):
     
     list_objects = objects.list_objects
     list_all_objects = objects.list_all_objects
-    get_object = objects.get_object
+    retrieve_object = objects.retrieve_object
     create_object = objects.create_object
     delete_object = objects.delete_object
     get_object_metadata = objects.get_object_metadata
     set_object_metadata = objects.set_object_metadata
+    copy_object = objects.copy_object
+    object_content_type = objects.object_content_type
     
     ''' cdn requests '''
     
