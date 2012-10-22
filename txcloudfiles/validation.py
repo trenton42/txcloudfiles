@@ -74,18 +74,21 @@ class HTTPMethodMixin(object):
     METHOD_POST = 'POST'
     METHOD_DELETE = 'DELETE'
     METHOD_HEAD = 'HEAD'
+    METHOD_COPT = 'COPY'
     METHODS = (
         METHOD_GET,
         METHOD_PUT,
         METHOD_POST,
         METHOD_DELETE,
         METHOD_HEAD,
+        METHOD_COPY,
     )
     GET = METHOD_GET
     PUT = METHOD_PUT
     POST = METHOD_POST
     DELETE = METHOD_DELETE
     HEAD = METHOD_HEAD
+    COPY = METHOD_COPY
 
 class HTTPResponseMixin(object):
     '''
