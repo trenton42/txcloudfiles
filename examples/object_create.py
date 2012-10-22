@@ -45,7 +45,9 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     container_name = 'some_test_container'
-    object_instance = Object('some_test_object.txt', content_type='text/plain', compress=True)
+    object_instance = Object('some_test_object.txt')
+    object_instance.set_content_type('text/plain')
+    object_instance.set_compressed()
     object_instance.set_data('example data in object')
     def _ok((response, obj)):
         '''

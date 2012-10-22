@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to delete an object. See:
+    Trivial example of how to copy an object to another container. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Delete_Object-d1e2264.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Copy_Object-d1e2241.html
 
 '''
 
@@ -45,17 +45,19 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     container_name = 'some_test_container'
-    object_name = 'some_test_object.txt'
+    # creating an Object() instance here so we can specify a new Content-Type
+    object_instance = Object('some_test_object.txt')
+    object_instance.set_content_type('text/css')
     def _ok((response, v)):
         '''
             'response' is a transport.Response() instance.
             'v' is boolean True.
         '''
         print '> got response: %s' % response
-        print '> deleted object: %s/%s' % (container_name, object_name)
+        print '> changed object content type: %s/%s -> text/css' % (container_name, object_instance.get_name())
         reactor.stop()
     print '> sending request'
-    session.delete_object(container_name, object_name).addCallback(_ok).addErrback(_error)
+    session.set_object_content_type(container_name, object_instance).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
