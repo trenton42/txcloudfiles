@@ -21,10 +21,9 @@
 
 '''
 
-    Trivial example of how to create an object without streaming. Complete file
-    contents is buffered. Only usable for small files. See:
+    Trivial example of how to copy an object to another container. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Create_Update_Object-d1e1965.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Copy_Object-d1e2241.html
 
 '''
 
@@ -46,25 +45,19 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     container_name = 'some_test_container'
+    # creating an Object() instance here so we can specify a new Content-Type
     object_instance = Object('some_test_object.txt')
-    object_instance.set_content_type('text/plain')
-    object_instance.set_compressed()
-    object_instance.set_data('example data in object')
-    def _ok((response, obj)):
+    object_instance.set_content_type('text/css')
+    def _ok((response, v)):
         '''
             'response' is a transport.Response() instance.
-            'obj' is a cfobject.Object() instance.
+            'v' is boolean True.
         '''
         print '> got response: %s' % response
-        print '> created object: %s/%s' % (container_name, object_instance.get_name())
-        print '> got object populated with response data: %s' % obj
+        print '> changed object content type: %s/%s -> text/css' % (container_name, object_instance.get_name())
         reactor.stop()
     print '> sending request'
-    # create_object() also takes an optional 'delete_at' kwarg which if set to a
-    # datetime.datetime instance in the future will reques the object be deleted
-    # from the rackspace cloudfiles servers at that time, use timedelta's to
-    # specify rolling timers (e.g. delete this 24hr's from now).
-    session.create_object(container_name, object_instance).addCallback(_ok).addErrback(_error)
+    session.object_content_type(container_name, object_instance).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''
