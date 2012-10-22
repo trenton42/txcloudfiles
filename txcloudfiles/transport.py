@@ -86,7 +86,7 @@ class Request(RequestBase):
     def _get_request_url(self):
         request_type = self._get_request_type()
         if request_type == Request.REQUEST_AUTH:
-            return self._session.get_endpoint().get_auth_url()
+            return self._auth.get_endpoint().get_auth_url()
         elif request_type == Request.REQUEST_CDN:
             parts = self._session.get_cdn_url_parts()
         else:

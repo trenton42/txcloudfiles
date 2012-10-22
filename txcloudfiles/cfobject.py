@@ -51,7 +51,8 @@ class Object(object):
         self._remote_len = 0
     
     def __repr__(self):
-        d = (self.__class__.__name__, self._name, int(self._bytes.b), hex(id(self)))
+        _b = int(self._bytes.b) if self._bytes else 0
+        d = (self.__class__.__name__, self._name, _b, hex(id(self)))
         return '<CloudFiles %s object (%s: %s bytes) at %s>' % d
     
     def __unicode__(self):

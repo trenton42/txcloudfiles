@@ -84,7 +84,7 @@ class Container(object):
         self._requests = 0
         self._name = parse_url_str(name)
         self._object_count = 0
-        self._data = None
+        self._bytes = None
         self._metadata = {}
         self._cdn = False
         self._logging = False
@@ -96,7 +96,8 @@ class Container(object):
     def __repr__(self):
         _state = 'public' if self._cdn else 'private'
         _id = hex(id(self))
-        d = (self.__class__.__name__, self._name, self._object_count, self._data.b, _state, _id)
+        _b = int(self._bytes.b) if self._bytes else 0
+        d = (self.__class__.__name__, self._name, self._object_count, _b, _state, _id)
         return '<CloudFiles %s object (%s: %s objects, %s bytes, %s) at %s>' % d
     
     def set_object_count(self, object_count):
@@ -135,7 +136,7 @@ class Container(object):
             obj.set_content_type(object_data.get('content_type', ''))
             obj.set_last_modified(object_data.get('last_modified', ''))
             if obj.is_valid():
-                self._objects.append(obj)
+                self._objects.appbytesend(obj)
     
     def __iter__(self):
         for o in self._objects:

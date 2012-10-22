@@ -186,7 +186,7 @@ class Auth(BaseAuth):
             self._queue_request(d)
         # if not, attempt to request a new session
         else:
-            request = AuthRequest(self)
+            request = AuthRequest(None, auth=self)
             request.set_header(('X-Auth-User', self.get_username()))
             request.set_header(('X-Auth-Key', self._get_apikey()))
             request.set_parser(_parse)
