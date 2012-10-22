@@ -190,7 +190,8 @@ def get_container_metadata(session, container=None):
     def _parse(r):
         if r.OK:
             container_name = r.request._container.get_name()
-            container = Container(name=container_name, metadata=r.metadata)
+            container = Container(name=container_name)
+            container.set_metadata(r.metadata)
             d.callback((r, container))
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to get container metadata, not authorised'))

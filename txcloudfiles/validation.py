@@ -53,6 +53,16 @@ class DataFormatMixin(object):
         REQUEST_STORAGE,
         REQUEST_CDN,
     )
+    CORS_HEADERS = (
+        'Access-Control-Allow-Credentials',
+        'Access-Control-Allow-Methods',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Expose-Headers',
+        'Access-Control-Max-Age',
+        'Access-Control-Request-Headers',
+        'Access-Control-Request-Method',
+        'Origin',
+    )
 
 class HTTPMethodMixin(object):
     '''

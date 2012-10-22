@@ -45,7 +45,7 @@ from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 def _got_session(session):
     print '> got session: %s' % session
     container_name = 'some_test_container'
-    object_instance = Object('some_test_object.txt')
+    object_instance = Object('some_test_object.txt', content_type='text/plain', compress=True)
     object_instance.set_data('example data in object')
     def _ok((response, obj)):
         '''
@@ -53,6 +53,7 @@ def _got_session(session):
             'obj' is a cfobject.Object() instance.
         '''
         print '> got response: %s' % response
+        print '> created object: %s/%s' % (container_name, object_instance.get_name())
         print '> got object populated with response data: %s' % obj
         reactor.stop()
     print '> sending request'

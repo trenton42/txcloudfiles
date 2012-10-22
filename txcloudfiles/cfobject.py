@@ -25,6 +25,7 @@
 
 '''
 
+from datetime import datetime
 from hashlib import md5
 from helpers import parse_int, DataUsage
 
@@ -33,20 +34,22 @@ class Object(object):
         A representation of a Cloud Files storage object.
     '''
     
-    def __init__(self, name='', file_hash='', bytes=0, content_type='', last_modified='', metadata={}):
+    def __init__(self, name=''):
         self._name = name
-        self._hash = file_hash
-        self._data = DataUsage(bytes)
-        self._content_type = content_type
-        self._last_modified = last_modified
-        self._metadata = metadata
-        self._data = None
+        self._hash = ''
+        self._bytes = None
+        self._content_type = ''
+        self._last_modified = ''
+        self._metadata = {}
+        self._compress = ''
+        self._download_name = ''
+        self._data = ''
         self._stream = None
-        self._hash = None
+        self._hash = ''
         self._len = 0
-
+    
     def __repr__(self):
-        d = (self.__class__.__name__, self._name, self._data.b, hex(id(self)))
+        d = (self.__class__.__name__, self._name, int(self._bytes.b), hex(id(self)))
         return '<CloudFiles %s object (%s: %s bytes) at %s>' % d
     
     def __unicode__(self):
@@ -54,6 +57,36 @@ class Object(object):
     
     def __str__(self):
         return self.get_name()
+    
+    def set_name(self, name):
+        self._name = str(name)
+    
+    def set_hash(self, file_hash):
+        self._hash = str(file_hash)
+    
+    def set_bytes(self, bytes):
+        self._bytes = DataUsage(bytes)
+    
+    def set_content_type(self, content_type):
+        self._content_type = str(content_type)
+    
+    def set_last_modified(self, last_modified):
+        if type(last_modified) == str or type(last_modified) == unicode:
+            try:
+                self._last_modified = datetime.strptime(last_modified, '%Y-%m-%dT%H:%M:%S.%f')
+                return True
+            except ValueError:
+                pass
+        return False
+    
+    def set_metadata(self, metadata):
+        self._metadata = metadata
+    
+    def set_compressed(self, compressed=True):
+        self._compressed = True if compressed else False
+    
+    def set_download_name(self, download_name):
+        self._download_name = str(download_name)
     
     def get_name(self):
         return self._name

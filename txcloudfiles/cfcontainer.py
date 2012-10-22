@@ -41,17 +41,15 @@ class ContainerSet(object):
     def add_containers(self, containers):
         self._requests += 1
         for container_data in containers:
-            container = Container(
-                name=container_data.get('name', ''),
-                object_count=parse_int(container_data.get('count', 0)),
-                bytes=container_data.get('bytes', 0),
-                cdn=container_data.get('cdn_enabled', False),
-                logging=container_data.get('log_retention', False),
-                ttl=parse_int(container_data.get('ttlparse_bool', 0)),
-                cdn_uri=container_data.get('cdn_uri', ''),
-                ssl_uri=container_data.get('cdn_ssl_uri', ''),
-                stream_uri=container_data.get('cdn_streaming_uri', '')
-            )
+            container = Container(container_data.get('name', ''))
+            container.set_object_count(parse_int(container_data.get('count', 0)))
+            container.set_bytes(container_data.get('bytes', 0))
+            container.set_cdn(container_data.get('cdn_enabled', False))
+            container.set_logging(container_data.get('log_retention', False))
+            container.set_ttl(parse_int(container_data.get('ttlparse_bool', 0)))
+            container.set_cdn_uri(container_data.get('cdn_uri', ''))
+            container.set_ssl_uri(container_data.get('cdn_ssl_uri', ''))
+            container.set_stream_uri(container_data.get('cdn_streaming_uri', ''))
             if container.is_valid():
                 self._containers.append(container)
     
@@ -81,19 +79,19 @@ class Container(object):
         A representation of a Cloud Files container.
     '''
     
-    def __init__(self, name='', object_count=0, bytes=0, metadata={}, cdn=False, logging=False, ttl=0, cdn_uri='', ssl_uri='', stream_uri=''):
+    def __init__(self, name=''):
         self._objects = []
         self._requests = 0
         self._name = parse_url_str(name)
-        self._object_count = object_count
-        self._data = DataUsage(bytes)
-        self._metadata = metadata
-        self._cdn = cdn
-        self._logging = logging
-        self._ttl = ttl
-        self._cdn_uri = cdn_uri
-        self._ssl_uri = ssl_uri
-        self._stream_uri = stream_uri
+        self._object_count = 0
+        self._data = None
+        self._metadata = {}
+        self._cdn = False
+        self._logging = False
+        self._ttl = 0
+        self._cdn_uri = ''
+        self._ssl_uri = ''
+        self._stream_uri = ''
     
     def __repr__(self):
         _state = 'public' if self._cdn else 'private'
@@ -101,16 +99,41 @@ class Container(object):
         d = (self.__class__.__name__, self._name, self._object_count, self._data.b, _state, _id)
         return '<CloudFiles %s object (%s: %s objects, %s bytes, %s) at %s>' % d
     
+    def set_object_count(self, object_count):
+        self._object_count = int(object_count)
+    
+    def set_bytes(self, bytes):
+        self._bytes = DataUsage(bytes)
+    
+    def set_metadata(self, metadata):
+        self._metadata = metadata
+    
+    def set_cdn(self, cdn=True):
+        self._cdn = True if cdn else False
+    
+    def set_logging(self, logging=True):
+        self._logging = True if logging else False
+    
+    def set_ttl(self, ttl):
+        self._ttl = int(ttl)
+    
+    def set_cdn_uri(self, uri):
+        self._cdn_uri = str(uri)
+    
+    def set_ssl_uri(self, uri):
+        self._ssl_uri = str(uri)
+    
+    def set_stream_uri(self, uri):
+        self._stream_uri = str(uri)
+    
     def add_objects(self, objects):
         self._requests += 1
         for object_data in objects:
-            obj = Object(
-                name=object_data.get('name', ''),
-                file_hash=object_data.get('hash', ''),
-                bytes=object_data.get('bytes', 0),
-                content_type=object_data.get('content_type', ''),
-                last_modified=object_data.get('last_modified', '')
-            )
+            obj = Object(object_data.get('name', ''))
+            obj.set_hash(object_data.get('hash', ''))
+            obj.set_bytes(object_data.get('bytes', 0))
+            obj.set_content_type(object_data.get('content_type', ''))
+            obj.set_last_modified(object_data.get('last_modified', ''))
             if obj.is_valid():
                 self._objects.append(obj)
     

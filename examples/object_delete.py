@@ -21,9 +21,9 @@
 
 '''
 
-    Trivial example of how to update object meta data. See:
+    Trivial example of how to deleta an object. See:
     
-    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Update_Object_Metadata-d1e2338.html
+    http://docs.rackspace.com/files/api/v1/cf-devguide/content/Delete_Object-d1e2264.html
 
 '''
 
@@ -39,7 +39,8 @@ except ImportError:
         sys.path.insert(0, txcfpath)
 
 from twisted.internet import reactor
-from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT, DataUsage
+from txcloudfiles.cfobject import Object
+from txcloudfiles import get_auth, UK_ENDPOINT, US_ENDPOINT
 
 def _got_session(session):
     print '> got session: %s' % session
@@ -51,11 +52,10 @@ def _got_session(session):
             'v' is boolean True.
         '''
         print '> got response: %s' % response
-        print '> updated metadata for: %s' % object_name
+        print '> deleted object: %s/%s' % (container_name, object_name)
         reactor.stop()
     print '> sending request'
-    # 'container' here is any name of an existing empty container. Can be a Container() object if you like.
-    session.set_object_metadata(container_name, object_name, metadata={'hi': '2u2'}).addCallback(_ok).addErrback(_error)
+    session.delete_object(container_name, object_name).addCallback(_ok).addErrback(_error)
 
 def _error(e):
     '''

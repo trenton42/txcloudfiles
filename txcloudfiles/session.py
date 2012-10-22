@@ -131,6 +131,12 @@ class Session(object):
     set_cdn_container_metadata = cdn.set_cdn_container_metadata
     purge_cdn_object = cdn.purge_cdn_object
 
+class NullSession(object):
+    '''
+        A null session is used during authentication when a session has not yet
+        been created.
+    '''
+
 '''
 
     EOF

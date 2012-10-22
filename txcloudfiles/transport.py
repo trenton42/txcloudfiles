@@ -70,9 +70,9 @@ class Request(RequestBase):
     TIMEOUT = 15
     REDIRECT_LIMIT = 0
     
-    def __init__(self, session, streamclient=None):
+    def __init__(self, session, auth=None):
         self._session = session
-        self._streamclient = streamclient
+        self._auth = auth
         self._request_headers = {}
         self._request_post = {}
         self._request_parser = None
@@ -160,10 +160,12 @@ class Request(RequestBase):
                 Got a response, if we're expecting a body then wait for the
                 protocol to return, otherwise fire the callback immediately.
             '''
+            #print getattr(response, 'printTraceback', str)()
             if self._get_expected_body():
                 d = Deferred()
                 d.addCallback(_got_data, response).addErrback(_got_data, response)
-                response.deliverBody(DownstreamTransportProtocol(d, self._streamclient))
+                stream = self._object.get_stream() if self._object else None
+                response.deliverBody(DownstreamTransportProtocol(d, stream))
                 return d
             else:
                 _got_data('', response)

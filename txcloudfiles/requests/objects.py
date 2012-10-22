@@ -60,6 +60,14 @@ class CreateObjectRequest(Request):
     REQUEST_TYPE = Request.REQUEST_STORAGE
     EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
 
+class DeleteObjectRequest(Request):
+    '''
+        Delete an object.
+    '''
+    METHOD = Request.DELETE
+    REQUEST_TYPE = Request.REQUEST_STORAGE
+    EXPECTED_RESPONSE_CODE = Response.HTTP_SUCCESSFUL
+
 class ObjectMetadataRequest(Request):
     '''
         Get object metadata.
@@ -175,7 +183,7 @@ def get_object(session, container=None, obj=None):
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
 
-def create_object(session, container=None, obj=None, delete_at=None, metadata={}):
+def create_object(session, container=None, obj=None, delete_at=None, metadata={}, cors={}):
     '''
         Create or replace an object into a container and returns a cfobject.Object()
         instance on success.
@@ -187,7 +195,7 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
     if not isinstance(container, Container):
         raise CreateRequestException('first argument must be a Container() instance or a string')
     _delete_at = 0
-    if type(delete_at) == datetime:
+    if type(delete_at) == datetime and delete_at > datetime.now():
         _delete_at = mktime(delete_at.timetuple())
     d = Deferred()
     def _parse(r):
@@ -196,19 +204,30 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
                 d.errback(ResponseException('failed to PUT data, upload hash mismatch (%s != %s)' % (r.headers['Etag'], obj.get_hash())))
             d.callback((r, obj))
         elif r.status_code == 401:
-            d.errback(NotAuthenticatedException('failed to get a list of objects, not authorised'))
+            d.errback(NotAuthenticatedException('failed to create object, not authorised'))
         elif r.status_code == 404:
-            d.errback(ResponseException('failed to get a list of objects, container does not exist'))
+            d.errback(ResponseException('failed to create object, container does not exist'))
         else:
-            d.errback(ResponseException('failed to get a list of objects'))
+            d.errback(ResponseException('failed to create object'))
     request = CreateObjectRequest(session)
     request.set_parser(_parse)
     request.set_container(container)
     request.set_object(obj)
     request.set_header(('Content-Length', obj.get_length()))
     request.set_header(('Etag', obj.get_hash()))
+    if _delete_at > 0:
+        request.set_header(('X-Delete-AtX-Delete-At', str(_delete_at)))
     for k,v in metadata.items():
         request.set_metadata((k, v), Metadata.OBJECT)
+    if obj._content_type:
+        request.set_header(('Content-Type', obj._content_type))
+    if obj._compress:
+        request.set_header(('Content-Encoding', 'gzip'))
+    if obj._download_name:
+        request.set_header(('Content-Disposition', 'attachment; %s' % obj._download_name))
+    for k,v in cors.items():
+        if k in Request.CORS_HEADERS:
+            request.set_header((k, v))
     request.set_stream(obj.get_stream()) if obj.is_stream() else request.set_body(obj.get_data())
     request.run()
     return d
@@ -225,6 +244,22 @@ def delete_object(session, container=None, obj=None):
         container = Container(name=container)
     if not isinstance(container, Container):
         raise CreateRequestException('second argument must be a Object() instance or a string')
+    d = Deferred()
+    def _parse(r):
+        if r.OK:
+            d.callback((r, True))
+        elif r.status_code == 401:
+            d.errback(NotAuthenticatedException('failed to delete object, not authorised'))
+        elif r.status_code == 404:
+            d.errback(ResponseException('failed to delete object, object does not exist'))
+        else:
+            d.errback(ResponseException('failed to delete object'))
+    request = DeleteObjectRequest(session)
+    request.set_parser(_parse)
+    request.set_container(container)
+    request.set_object(obj)
+    request.run()
+    return d
 
 def get_object_metadata(session, container=None, obj=None):
     '''
@@ -242,14 +277,15 @@ def get_object_metadata(session, container=None, obj=None):
     def _parse(r):
         if r.OK:
             object_name = r.request._object.get_name()
-            obj = Object(name=object_name, metadata=r.metadata)
+            obj = Object(name=object_name)
+            obj.set_metadata(r.metadata)
             d.callback((r, obj))
         elif r.status_code == 401:
-            d.errback(NotAuthenticatedException('failed to set container metadata, not authorised'))
+            d.errback(NotAuthenticatedException('failed to set object metadata, not authorised'))
         elif r.status_code == 404:
-            d.errback(NotAuthenticatedException('failed to set container metadata, container does not exist'))
+            d.errback(NotAuthenticatedException('failed to set object metadata, object does not exist'))
         else:
-            d.errback(ResponseException('failed to set container metadata'))
+            d.errback(ResponseException('failed to set object metadata'))
     request = ObjectMetadataRequest(session)
     request.set_parser(_parse)
     request.set_container(container)
@@ -277,7 +313,7 @@ def set_object_metadata(session, container=None, obj=None, metadata={}):
         elif r.status_code == 401:
             d.errback(NotAuthenticatedException('failed to set object metadata, not authorised'))
         elif r.status_code == 404:
-            d.errback(ResponseException('failed to set object metadata, container does not exist'))
+            d.errback(ResponseException('failed to set object metadata, object does not exist'))
         else:
             d.errback(ResponseException('failed to set object metadata'))
     request = UpdateObjectMetadataRequest(session)
