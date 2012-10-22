@@ -12,9 +12,8 @@ http://docs.rackspace.com/files/api/v1/cf-devguide/content/index.html
 Once out of beta this package will aim to be a feature-complete twisted library
 for accessing Cloud Files.
 
-Developed and tested with Python 2.7 and Twisted 11.1, it is not advised to
-attempt to use earlier versions of Python or Twisted (given txcloudfiles uses
-the standard json module it will certainly fail with Python < 2.6).
+Developed and tested with Python 2.7 and Twisted 11.1, although it should work
+given the features used (but not tested) with Python >= 2.6 and Twisted >= 9.0.
 
 Todo:
  * add large object streaming support
