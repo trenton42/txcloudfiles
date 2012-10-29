@@ -11,7 +11,8 @@ folder for detailed bare examples on all operations. It also supports streaming
 of files via producers for efficient uploading and downloading of large files.
 
 All operations are fully asynchronous and will be simple to anyone who is
-familiar with Twisted.
+familiar with Twisted. It contains two complete interfaces, a standard library
+and a twisted resource that can be used as a reverse proxy.
 
 txcloudfiles was Developed and tested with Python 2.7 and Twisted 11.1, although
 it should work given the features used (but not tested) with Python >= 2.6 and

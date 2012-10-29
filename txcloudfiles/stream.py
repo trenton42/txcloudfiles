@@ -52,54 +52,6 @@ class DownstreamTransportProtocol(Protocol):
         else: 
             self.d.callback(self.buffer)
 
-class BlockProducer(object):
-    '''
-        Produces a single block of non-streamable data in one request.
-    '''
-    
-    implements(IBodyProducer)
-    
-    def __init__(self, data):
-        self.data = data
-        self.length = len(self.data)
-    
-    def startProducing(self, consumer):
-        consumer.write(self.data)
-        return succeed(None)
-    
-    def pauseProducing(self):
-        pass
-    
-    def stopProducing(self):
-        pass
-
-class StreamProducer(object):
-    '''
-        Produces chunks of data from a source upstream on request.
-    '''
-    
-    implements(IBodyProducer)
-    
-    disconnecting = False
-    
-    def __init__(self, producer):
-        self._producer = producer
-    
-    def _stopProxying(self):
-        self._producer = None
-    
-    def stopProducing(self):
-        if self._producer is not None:
-            self._producer.stopProducing()
-    
-    def resumeProducing(self):
-        if self._producer is not None:
-            self._producer.resumeProducing()
-    
-    def pauseProducing(self):
-        if self._producer is not None:
-            self._producer.pauseProducing()
-
 '''
 
     EOF
