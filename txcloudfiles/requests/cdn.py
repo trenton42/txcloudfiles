@@ -26,7 +26,7 @@
 
 from twisted.internet.defer import Deferred
 from txcloudfiles.transport import Request, Response
-from txcloudfiles.errors import NotAuthenticatedException, ResponseException
+from txcloudfiles.errors import NotAuthenticatedException, ResponseException, CreateRequestException
 from txcloudfiles.helpers import parse_int, parse_str
 from txcloudfiles.cfcontainer import Container, ContainerSet
 
@@ -109,20 +109,7 @@ def list_cdn_containers(session):
 
 def set_cdn_container_metadata(session, container=None, metadata={}):
     '''
-        Sets metadat    d = Deferred()
-    def _parse(r):
-        if r.OK:
-            containerset = ContainerSet()
-            containerset.add_containers(r.json)
-            d.callback((r, containerset))
-        elif r.status_code == 401:
-            d.errback(NotAuthenticatedException('failed to get a list of CDN containers, not authorised'))
-        else:
-            d.errback(ResponseException('failed to get a list of CDN containers'))
-    request = ListCDNContainersRequest(session)
-    request.set_parser(_parse)
-    request.run()
-    return da on a CDN-enabled container and returns a Container()
+        Sets metadata on a CDN-enabled container and returns a Container()
         object on success populated with metadata.
     '''
     if type(container) == str or type(container) == unicode:

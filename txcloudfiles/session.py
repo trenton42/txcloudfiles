@@ -29,7 +29,7 @@
 from time import time
 from urlparse import urlsplit
 from errors import NotAuthenticatedException
-from requests import account, containers, objects, cdn
+from requests import account, containers, objects, cdn, streaming
 
 class Session(object):
     '''
@@ -132,7 +132,13 @@ class Session(object):
     get_cdn_container_metadata = cdn.get_cdn_container_metadata
     set_cdn_container_metadata = cdn.set_cdn_container_metadata
     purge_cdn_object = cdn.purge_cdn_object
-
+    
+    
+    ''' streaming requests '''
+    
+    stream_upload = streaming.stream_upload
+    stream_download = streaming.stream_download
+    
 class NullSession(object):
     '''
         A null session is used during authentication when a session has not yet

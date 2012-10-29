@@ -44,8 +44,11 @@ def parse_url_str(x):
 
 class Metadata(object):
     
+    ACCOUNT = 'X-'
     CONTAINER = 'X-Container-Meta-'
     OBJECT = 'X-Object-Meta-'
+    CDN = 'X-'
+    DEFAULT = 'X-Meta-'
     
     def __init__(self, prefix=None):
         self.prefix = self.OBJECT if prefix == self.OBJECT else self.CONTAINER
@@ -76,6 +79,22 @@ class Metadata(object):
         for k,v in headers.items():
             headers[self.prefix_header(k)] = v
         return headers
+    
+    def to_remote(self, header):
+        '''
+            Changes generic X-Meta- headers into X-Meta-[context specific]-
+            headers.
+        '''
+        if header.title()[:len(self.DEFAULT)] == self.DEFAULT:
+            return self.prefix + header.title()[len(self.DEFAULT)+1:]
+    
+    def from_remote(self, header):
+        '''
+            Changes remote X-Meta-[context specific]- headers into generic
+            X-Meta- headers.
+        '''
+        if header.title()[:len(self.prefix)] == self.prefix:
+            return self.DEFAULT + header.title()[len(self.prefix)+1:]
 
 class DataUsage(object):
     
@@ -84,12 +103,14 @@ class DataUsage(object):
     BANDWIDTH_MB = 1024*1024
     BANDWIDTH_GB = 1024*1024*1024
     BANDWIDTH_TB = 1024*1024*1024*1024
+    BANDWIDTH_PB = 1024*1024*1024*1024*1024
     BANDWIDTHS = (
         BANDWIDTH_B,
         BANDWIDTH_KB,
         BANDWIDTH_MB,
         BANDWIDTH_GB,
         BANDWIDTH_TB,
+        BANDWIDTH_PB,
     )
     
     def __init__(self, bytes=0):

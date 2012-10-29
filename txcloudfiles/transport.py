@@ -199,8 +199,11 @@ class Request(RequestBase):
         url = self._get_request_url()
         producer = None
         if self._get_required_body() and self._object:
-            producer = StreamProducer(self._stream) if self._object.is_stream() else BlockProducer(self._body)
-        agent = Agent(reactor, SSLContextFactory(url))
+            producer = self._object.get_stream() if self._object.is_stream() else BlockProducer(self._body)
+        context = SSLContextFactory()
+        if hasattr(context, 'set_expected_host'):
+            context.set_expected_host(url)
+        agent = Agent(reactor, context)
         d = agent.request(
             self._get_request_method(),
             url,

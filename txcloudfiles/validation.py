@@ -75,6 +75,7 @@ class HTTPMethodMixin(object):
     METHOD_DELETE = 'DELETE'
     METHOD_HEAD = 'HEAD'
     METHOD_COPY = 'COPY'
+    METHOD_OPTIONS = 'OPTIONS'
     METHODS = (
         METHOD_GET,
         METHOD_PUT,
@@ -82,6 +83,7 @@ class HTTPMethodMixin(object):
         METHOD_DELETE,
         METHOD_HEAD,
         METHOD_COPY,
+        METHOD_OPTIONS,
     )
     GET = METHOD_GET
     PUT = METHOD_PUT
@@ -89,6 +91,7 @@ class HTTPMethodMixin(object):
     DELETE = METHOD_DELETE
     HEAD = METHOD_HEAD
     COPY = METHOD_COPY
+    OPTIONS = METHOD_OPTIONS
 
 class HTTPResponseMixin(object):
     '''
@@ -369,6 +372,13 @@ class ResponseBase(HTTPResponseMixin, DataFormatMixin):
         Loads the above mixins as an extendable base.
     '''
     pass
+
+class HTTPProtocol(HTTPMethodMixin, HTTPResponseMixin):
+    '''
+        Loads the above mixins as an extendable base.
+    '''
+    pass
+
 
 '''
 

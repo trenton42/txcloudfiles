@@ -28,6 +28,7 @@ __all__ = [
     'cfcontainer',
 ]
 
+from proxy import get_proxy
 from auth import Endpoint, Auth, get_auth
 from helpers import DataUsage, Metadata
 

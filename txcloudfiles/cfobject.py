@@ -44,7 +44,8 @@ class Object(object):
         self._compress = ''
         self._download_name = ''
         self._data = ''
-        self._stream = None
+        self._transport = None
+        self._transport_len = 0
         self._hash = ''
         self._remote_hash = ''
         self._len = 0
@@ -114,14 +115,17 @@ class Object(object):
     def get_metadata(self):
         return self._metadata
     
-    def set_stream(self, stream, streamlen=0, streamhash=None):
-        self._stream = stream
-        self._len = streamlen
-        if streamhash:
-            self._hash = streamhash
+    def set_transport(self, transport):
+        self._transport = transport
     
-    def get_stream(self):
-        return self._stream
+    def set_transport_len(self, length):
+        self._transport_len = parse_int(length)
+    
+    def get_transport(self):
+        return self._transport
+    
+    def get_transport_length(self):
+        return self._transport_len
     
     def get_hash(self):
         return self._hash
