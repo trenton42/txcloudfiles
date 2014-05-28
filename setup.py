@@ -28,6 +28,10 @@ setup(
     author='Joe Harris',
     author_email='j@m.pr',
     packages=find_packages(),
+    install_requires=[
+        'twisted',
+        'pyopenssl'
+    ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'License :: OSI Approved :: Apache Software License',
