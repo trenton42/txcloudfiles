@@ -6,3 +6,4 @@ pip-log.txt
 .coverage
 .tox
 tests/_trial_*
+venv
