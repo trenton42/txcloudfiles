@@ -17,11 +17,10 @@
 '''
 
 from setuptools import setup, find_packages
-from txcloudfiles import __version__
 
 setup(
     name='txcloudfiles',
-    version=__version__,
+    version="0.1",
     url='https://github.com/meeb/txcloudfiles',
     license='Apache 2.0',
     description='twisted interface to rackspace cloud files',
@@ -30,7 +29,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         'twisted',
-        'pyopenssl'
+        'pyopenssl',
+        'service_identity',
+        'txverifyssl'
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
