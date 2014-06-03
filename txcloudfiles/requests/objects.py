@@ -227,19 +227,20 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
         Create or replace an object into a container and returns a cfobject.Object()
         instance on success.
     '''
-    if not isinstance(container, Container):
-        raise CreateRequestException('first argument must be a Container() instance or a string')
     if type(container) == str or type(container) == unicode:
         container = Container(name=container)
+    if not isinstance(container, Container):
+        raise CreateRequestException('first argument must be a Container() instance or a string')
     if not isinstance(obj, Object):
         raise CreateRequestException('second argument must be an Object()  instance or a string')
     _delete_at = 0
     if type(delete_at) == datetime and delete_at > datetime.now():
         _delete_at = mktime(delete_at.timetuple())
     d = Deferred()
+
     def _parse(r):
         if r.OK:
-            if r.headers.get('ETag', '') != obj.get_hash():
+            if 'ETag' in r.headers and r.headers.get('ETag', '') != obj.get_hash():
                 d.errback(ResponseException('failed to PUT data, upload hash mismatch (%s != %s)' % (r.headers.get('ETag', ''), obj.get_hash())))
             d.callback((r, obj))
         elif r.status_code == 401:
@@ -255,8 +256,8 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
     request.set_header(('Content-Length', obj.get_length()))
     request.set_header(('Etag', obj.get_hash()))
     if _delete_at > 0:
-        request.set_header(('X-Delete-AtX-Delete-At', str(_delete_at)))
-    for k,v in metadata.items():
+        request.set_header(('X-Delete-At', str(_delete_at)))
+    for k, v in metadata.items():
         request.set_metadata((k, v), Metadata.OBJECT)
     if obj._content_type:
         request.set_header(('Content-Type', obj._content_type))
@@ -264,7 +265,7 @@ def create_object(session, container=None, obj=None, delete_at=None, metadata={}
         request.set_header(('Content-Encoding', 'gzip'))
     if obj._download_name:
         request.set_header(('Content-Disposition', 'attachment; %s' % obj._download_name))
-    for k,v in cors.items():
+    for k, v in cors.items():
         if k in Request.CORS_HEADERS:
             request.set_header((k, v))
     request.set_stream(obj.get_stream()) if obj.is_stream() else request.set_body(obj.get_data())
