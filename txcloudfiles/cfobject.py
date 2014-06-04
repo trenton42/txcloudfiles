@@ -141,6 +141,9 @@ class Object(object):
     def is_stream(self):
         return True if self._stream else False
 
+    def get_stream(self):
+        return self._stream if self._stream else self._data
+
 '''
 
     EOF
